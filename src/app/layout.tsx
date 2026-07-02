@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import HeaderWrapper from "@/components/HeaderWrapper";
 import BottomNav from "@/components/BottomNav";
 import SplashScreen from "@/components/SplashScreen";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -49,17 +50,20 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background text-foreground pb-20 overscroll-none">
-        <SplashScreen />
-        <HeaderWrapper>
-          <Header />
-        </HeaderWrapper>
-        <main className="flex-1 w-full max-w-md mx-auto relative px-4 pt-6 pb-6">
-          {children}
-        </main>
-        <BottomNav />
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <SplashScreen />
+          <HeaderWrapper>
+            <Header />
+          </HeaderWrapper>
+          <main className="flex-1 w-full max-w-md mx-auto relative px-4 pt-6 pb-6">
+            {children}
+          </main>
+          <BottomNav />
+        </ThemeProvider>
       </body>
     </html>
   );

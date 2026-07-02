@@ -92,7 +92,7 @@ export default async function ExercisePage({
           
           {exercise.imageUrl && (
             <div className="mt-4 rounded-xl overflow-hidden border border-muted">
-              <img src={exercise.imageUrl} alt={exercise.name} className="w-full h-auto object-cover max-h-48" />
+              <img src={`/api/blob?url=${encodeURIComponent(exercise.imageUrl)}`} alt={exercise.name} className="w-full h-auto object-cover max-h-48" />
             </div>
           )}
         </div>

@@ -4,7 +4,7 @@ import prisma from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import { cookies } from "next/headers";
-import { put } from "@vercel/blob";
+import { put, del } from "@vercel/blob";
 
 // --- AUTHENTICATION ACTIONS ---
 
@@ -445,7 +445,8 @@ export async function getRoutineProfiles() {
 
     let profiles = await prisma.routineProfile.findMany({
       where: { userId: user.id },
-      orderBy: { id: 'asc' }
+      orderBy: { id: 'asc' },
+      include: { routineDays: true }
     });
 
     if (profiles.length === 0) {
@@ -490,7 +491,8 @@ export async function getRoutineProfiles() {
 
       profiles = await prisma.routineProfile.findMany({
         where: { userId: user.id },
-        orderBy: { id: 'asc' }
+        orderBy: { id: 'asc' },
+        include: { routineDays: true }
       });
     }
 
@@ -724,6 +726,11 @@ export async function updateExercise(id: string, data: { name: string, sets: num
     const user = await getCurrentUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
+    const exercise = await prisma.exerciseConfig.findUnique({ where: { id, userId: user.id } });
+    if (exercise?.imageUrl && data.imageUrl !== undefined && exercise.imageUrl !== data.imageUrl && exercise.imageUrl.includes('vercel-storage.com')) {
+      try { await del(exercise.imageUrl); } catch (e) { console.error("Failed to delete old exercise image:", e); }
+    }
+
     await prisma.exerciseConfig.update({ where: { id, userId: user.id }, data });
     revalidatePath("/");
     revalidatePath("/settings");
@@ -743,6 +750,9 @@ export async function deleteExercise(id: string) {
     // we should ideally clean up references in routineDay, but Prisma handles array relations 
     // by storing ObjectIds. Let's manually pull the ID from routineDays.
     const exercise = await prisma.exerciseConfig.findUnique({ where: { id, userId: user.id } });
+    if (exercise?.imageUrl && exercise.imageUrl.includes('vercel-storage.com')) {
+      try { await del(exercise.imageUrl); } catch (e) { console.error("Failed to delete exercise image:", e); }
+    }
     if (exercise && exercise.routineDayIds.length > 0) {
       // Find days that have this exercise and remove it
       const days = await prisma.routineDay.findMany({ where: { id: { in: exercise.routineDayIds }, userId: user.id } });
@@ -846,7 +856,10 @@ export async function uploadImage(formData: FormData) {
       return { success: false, error: 'File exceeds 3MB limit' };
     }
 
-    const blob = await put(file.name, file, { access: 'public' });
+    const blob = await put(file.name, file, { 
+      access: 'private',
+      addRandomSuffix: true 
+    });
     return { success: true, url: blob.url };
   } catch (error: any) {
     console.error('Failed to upload image:', error);
@@ -859,6 +872,17 @@ export async function updateProfilePicture(url: string) {
     const user = await getCurrentUser();
     if (!user) return { success: false, error: 'Unauthorized' };
 
+    const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+    if (dbUser?.profilePicUrl && dbUser.profilePicUrl !== url && dbUser.profilePicUrl.includes('vercel-storage.com')) {
+      try { 
+        console.log("Attempting to delete old blob:", dbUser.profilePicUrl);
+        await del(dbUser.profilePicUrl); 
+        console.log("Successfully deleted old blob.");
+      } catch (e) { 
+        console.error("Failed to delete old profile picture:", e); 
+      }
+    }
+
     await prisma.user.update({
       where: { id: user.id },
       data: { profilePicUrl: url }
@@ -870,5 +894,56 @@ export async function updateProfilePicture(url: string) {
   } catch (error: any) {
     console.error('Failed to update profile picture:', error);
     return { success: false, error: error.message || 'Failed to update profile picture' };
+  }
+}
+
+// --- HISTORY ACTIONS ---
+export async function getWorkoutHistory(query: string = "", skip: number = 0, take: number = 15, profileDayNames: string[] = []) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const searchFilter = query ? {
+      OR: [
+        { dayName: { contains: query, mode: 'insensitive' as const } },
+        { exercises: { some: { exerciseName: { contains: query, mode: 'insensitive' as const } } } }
+      ]
+    } : {};
+
+    const dayFilter = profileDayNames.length > 0 ? {
+      dayName: { in: profileDayNames }
+    } : {};
+
+    const sessions = await prisma.workoutSession.findMany({
+      where: { 
+        userId: user.id,
+        dayName: { not: "SYSTEM_CYCLE_MARKER" },
+        ...searchFilter,
+        ...dayFilter
+      },
+      orderBy: { date: 'desc' },
+      skip,
+      take,
+      include: { exercises: true }
+    });
+
+    const history = sessions.map(session => {
+      const statusLog = session.exercises.find(e => e.exerciseName.startsWith("SYSTEM_STATUS_"));
+      const status = statusLog ? statusLog.exerciseName.replace("SYSTEM_STATUS_", "") : "PENDING";
+      const realExercises = session.exercises.filter(e => !e.exerciseName.startsWith("SYSTEM_STATUS_"));
+
+      return {
+        id: session.id,
+        date: session.date,
+        dayName: session.dayName,
+        status,
+        exercises: realExercises
+      };
+    });
+
+    return { success: true, data: history };
+  } catch (error) {
+    console.error("Failed to get workout history:", error);
+    return { success: false, error: "Failed to get workout history" };
   }
 }

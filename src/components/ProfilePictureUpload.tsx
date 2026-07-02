@@ -49,7 +49,7 @@ export default function ProfilePictureUpload({
       <div className="relative group shrink-0">
         <div className="w-20 h-20 rounded-full bg-primary/20 text-primary flex items-center justify-center border-2 border-primary/30 overflow-hidden relative">
           {currentUrl ? (
-            <img src={currentUrl} alt="Profile" className="w-full h-full object-cover" />
+            <img src={`/api/blob?url=${encodeURIComponent(currentUrl)}`} alt="Profile" className="w-full h-full object-cover" />
           ) : (
             <User size={32} />
           )}

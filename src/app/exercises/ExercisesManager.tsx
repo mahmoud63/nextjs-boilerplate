@@ -16,20 +16,42 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
   const [uploadError, setUploadError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const handleSaveExercise = async () => {
-    startTransition(async () => {
-      if (editingEx) {
-        await updateExercise(editingEx.id, exForm);
+    setIsUploading(true);
+    let finalImageUrl = exForm.imageUrl;
+    
+    if (selectedFile) {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      const res = await uploadImage(formData);
+      if (res.success && res.url) {
+        finalImageUrl = res.url;
       } else {
-        await createExercise(exForm);
+        setUploadError(res.error || "Failed to upload image");
+        setIsUploading(false);
+        return;
+      }
+    }
+
+    startTransition(async () => {
+      const finalForm = { ...exForm, imageUrl: finalImageUrl };
+      if (editingEx) {
+        await updateExercise(editingEx.id, finalForm);
+      } else {
+        await createExercise(finalForm);
       }
       setShowExModal(false);
       setEditingEx(null);
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      setIsUploading(false);
     });
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
@@ -39,19 +61,8 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
     }
     
     setUploadError("");
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-
-    startTransition(async () => {
-      const res = await uploadImage(formData);
-      if (res.success && res.url) {
-        setExForm({ ...exForm, imageUrl: res.url });
-      } else {
-        setUploadError(res.error || "Failed to upload");
-      }
-      setIsUploading(false);
-    });
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
   };
 
   const handleDeleteExercise = async (id: string) => {
@@ -88,6 +99,8 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
           onClick={() => {
             setEditingEx(null);
             setExForm({ name: "", sets: 3, reps: "12", targetMuscle: "", rest: "60 sec", notes: "", imageUrl: "" });
+            setSelectedFile(null);
+            setPreviewUrl(null);
             setShowExModal(true);
           }}
           className="w-full bg-primary/10 text-primary py-4 rounded-xl border border-primary/20 font-bold flex items-center justify-center gap-2 hover:bg-primary/20 transition-colors"
@@ -100,7 +113,7 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
             <div key={ex.id} className="bg-card border border-muted p-4 rounded-xl flex items-start justify-between group">
               <div>
                 <div className="flex items-center gap-3">
-                  {ex.imageUrl && <img src={ex.imageUrl} alt={ex.name} className="w-12 h-12 object-cover rounded-xl bg-black/50 border border-muted" />}
+                  {ex.imageUrl && <img src={`/api/blob?url=${encodeURIComponent(ex.imageUrl)}`} alt={ex.name} className="w-12 h-12 object-cover rounded-xl bg-black/50 border border-muted" />}
                   <div>
                     <h3 className="font-bold text-foreground">{ex.name}</h3>
                     <p className="text-xs text-muted-foreground mt-1">{ex.sets} sets × {ex.reps} • {ex.targetMuscle}</p>
@@ -120,6 +133,8 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
                       notes: ex.notes || "",
                       imageUrl: ex.imageUrl || ""
                     });
+                    setSelectedFile(null);
+                    setPreviewUrl(null);
                     setShowExModal(true);
                   }}
                   className="p-2 text-muted-foreground hover:text-primary transition-colors"
@@ -173,16 +188,16 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
                 </div>
                 <div>
                   <label className="text-xs font-bold text-muted-foreground block mb-2">Exercise Image</label>
-                  {exForm.imageUrl ? (
+                  {previewUrl || exForm.imageUrl ? (
                     <div className="relative w-full h-40 rounded-xl overflow-hidden bg-muted group border border-muted">
-                      <img src={exForm.imageUrl} alt="Exercise" className="w-full h-full object-cover" />
+                      <img src={previewUrl || `/api/blob?url=${encodeURIComponent(exForm.imageUrl)}`} alt="Exercise" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6">
                         <label className="cursor-pointer text-white flex flex-col items-center hover:scale-110 transition-transform">
                           <Upload size={24} />
                           <span className="text-xs mt-1 font-bold">Change</span>
                           <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading || isPending} />
                         </label>
-                        <button onClick={() => setExForm({...exForm, imageUrl: ""})} type="button" className="text-red-400 flex flex-col items-center hover:scale-110 transition-transform">
+                        <button onClick={() => { setExForm({...exForm, imageUrl: ""}); setSelectedFile(null); setPreviewUrl(null); }} type="button" className="text-red-400 flex flex-col items-center hover:scale-110 transition-transform">
                           <Trash2 size={24} />
                           <span className="text-xs mt-1 font-bold">Remove</span>
                         </button>
@@ -209,8 +224,10 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
                 </div>
               </div>
               <div className="p-4 border-t border-muted flex gap-3 bg-muted/20">
-                <button onClick={() => setShowExModal(false)} className="flex-1 py-2 rounded-xl font-semibold text-muted-foreground hover:bg-muted transition-colors">Cancel</button>
-                <button onClick={handleSaveExercise} disabled={!exForm.name || !exForm.targetMuscle} className="flex-1 py-2 rounded-xl font-bold bg-foreground text-background disabled:opacity-50">Save</button>
+                <button onClick={() => { setShowExModal(false); setSelectedFile(null); setPreviewUrl(null); }} className="flex-1 py-2 rounded-xl font-semibold text-muted-foreground hover:bg-muted transition-colors">Cancel</button>
+                <button onClick={handleSaveExercise} disabled={!exForm.name || !exForm.targetMuscle || isUploading} className="flex-1 py-2 rounded-xl font-bold bg-foreground text-background disabled:opacity-50">
+                  {isUploading ? "Saving..." : "Save"}
+                </button>
               </div>
             </div>
           </div>
