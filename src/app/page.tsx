@@ -1,3 +1,4 @@
+// Beast Tracker Main Dashboard Component
 import { getTodaySession, getRoutineDay, getAllRoutineDays, getAllCycleSessions } from "@/app/actions";
 import Link from "next/link";
 import { ChevronRight, CalendarDays, Flame, CheckCircle2, FastForward } from "lucide-react";
