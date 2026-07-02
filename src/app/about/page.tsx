@@ -84,6 +84,13 @@ export default function AboutPage() {
           mahmoudk63@gmail.com
         </a>
       </section>
+
+      <section className="bg-card/50 p-6 rounded-3xl border border-muted/50 shadow-sm space-y-3 mt-8">
+        <h2 className="text-sm font-bold uppercase tracking-tight text-muted-foreground">Legal Disclaimer</h2>
+        <p className="text-xs text-muted-foreground/80 leading-relaxed text-justify">
+          The system administrator and the developer of Beast Tracker assume no responsibility or liability for any copyright infringement, unauthorized distribution, or misuse of licensed images, graphics, or media uploaded by users. All content, including but not limited to exercise demonstration media and user profile pictures, is uploaded at the sole discretion and responsibility of the individual user. By utilizing this platform, users expressly agree that they possess the necessary rights, licenses, and permissions for any content they upload, and they agree to indemnify and hold harmless the system administrator from any claims or damages arising from such user-generated content.
+        </p>
+      </section>
     </div>
   );
 }
