@@ -1,0 +1,1 @@
+const fs = require('fs'); fs.copyFileSync('C:\\Users\\mahmo\\.gemini\\antigravity\\brain\\e4b453c2-5ded-45eb-8772-c6c48b6c549d\\app_icon_1782957532187.png', 'C:\\Users\\mahmo\\Documents\\self-tracking\\workout-tracker\\public\\icon.png'); console.log('Copied successfully!');  

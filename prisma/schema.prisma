@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String           @id @default(auto()) @map("_id") @db.ObjectId
+  username        String           @unique
+  passwordHash    String
+  height          Float
+  weightLogs      WeightLog[]
+  workoutSessions WorkoutSession[]
+  routineProfiles RoutineProfile[]
+  routineDays     RoutineDay[]
+  exerciseConfigs ExerciseConfig[]
+  sessions        Session[]
+}
+
+model Session {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+}
+
+model WeightLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weight    Float
+  date      DateTime @default(now())
+}
+
+model WorkoutSession {
+  id         String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String?       @db.ObjectId
+  user       User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date       DateTime      @default(now())
+  dayName    String        // e.g., "Chest & Triceps"
+  status     String        @default("PENDING") // PENDING, COMPLETED, SKIPPED
+  exercises  ExerciseLog[]
+}
+
+type SetLog {
+  setNumber Int
+  weight    Float
+  reps      Int
+}
+
+model ExerciseLog {
+  id               String         @id @default(auto()) @map("_id") @db.ObjectId
+  workoutSessionId String         @db.ObjectId
+  workoutSession   WorkoutSession @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
+  exerciseName     String
+  date             DateTime       @default(now())
+  sets             SetLog[]
+}
+
+model RoutineProfile {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String       @db.ObjectId
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  isActive    Boolean      @default(false)
+  activatedAt DateTime?
+  routineDays RoutineDay[]
+}
+
+model RoutineDay {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String?  @db.ObjectId
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dayNumber   Int      // 1 to 7 (1 = Monday, 7 = Sunday)
+  dayName     String
+  description String
+  isRestDay   Boolean  @default(false)
+  
+  routineProfileId String?         @db.ObjectId
+  routineProfile   RoutineProfile? @relation(fields: [routineProfileId], references: [id], onDelete: Cascade)
+
+  // Many-to-Many Relationship mapped in Prisma MongoDB
+  exerciseIds String[] @db.ObjectId
+  exercises   ExerciseConfig[] @relation(fields: [exerciseIds], references: [id])
+}
+
+model ExerciseConfig {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String?  @db.ObjectId
+  user          User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  sets          Int
+  reps          String
+  targetMuscle  String
+  rest          String
+  notes         String?
+  imageUrl      String?
+  
+  // Many-to-Many Relationship mapped in Prisma MongoDB
+  routineDayIds String[] @db.ObjectId
+  routineDays   RoutineDay[] @relation(fields: [routineDayIds], references: [id])
+}
