@@ -4,7 +4,7 @@ import prisma from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import { cookies } from "next/headers";
-import { put, del } from "@vercel/blob";
+import { put, del, copy } from "@vercel/blob";
 
 // --- AUTHENTICATION ACTIONS ---
 
@@ -516,22 +516,19 @@ export async function createRoutineProfile(name: string) {
       }
     });
 
-    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-    for (let i = 0; i < 7; i++) {
-      await prisma.routineDay.create({
-        data: {
-          userId: user.id,
-          routineProfileId: profile.id,
-          dayNumber: i + 1,
-          dayName: days[i],
-          description: i >= 5 ? "Rest Day" : "Workout Day",
-          isRestDay: i >= 5,
-          exerciseIds: []
-        }
-      });
-    }
+    const day = await prisma.routineDay.create({
+      data: {
+        userId: user.id,
+        routineProfileId: profile.id,
+        dayNumber: 1,
+        dayName: "Day 1",
+        description: "Workout Day",
+        isRestDay: false,
+        exerciseIds: []
+      }
+    });
 
-    revalidatePath("/days");
+    revalidatePath("/studio");
     return { success: true, data: profile };
   } catch (error) {
     console.error("Failed to create profile:", error);
@@ -652,13 +649,23 @@ export async function getAllRoutineDays(profileId?: string) {
   }
 }
 
-export async function getRoutineDay(dayNumber: number) {
+export async function getRoutineDay(dayNumber: number, profileId?: string) {
   try {
     const user = await getCurrentUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
+    let targetProfileId = profileId;
+    if (!targetProfileId) {
+      const activeProfile = await prisma.routineProfile.findFirst({
+        where: { userId: user.id, isActive: true }
+      });
+      targetProfileId = activeProfile?.id;
+    }
+
+    if (!targetProfileId) return { success: false, error: "No active profile" };
+
     const day = await prisma.routineDay.findFirst({
-      where: { dayNumber, userId: user.id },
+      where: { dayNumber, userId: user.id, routineProfileId: targetProfileId },
       include: { exercises: true }
     });
     return { success: true, data: day };
@@ -683,11 +690,89 @@ export async function updateRoutineDay(id: string, data: { dayName: string, desc
       }
     });
     revalidatePath("/");
-    revalidatePath("/settings");
+    revalidatePath("/studio");
     return { success: true };
   } catch (error) {
     console.error("Failed to update routine day:", error);
     return { success: false, error: "Failed to update routine day" };
+  }
+}
+
+export async function addRoutineDay(profileId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const existingDays = await prisma.routineDay.findMany({
+      where: { userId: user.id, routineProfileId: profileId },
+      orderBy: { dayNumber: 'desc' }
+    });
+
+    if (existingDays.length >= 30) {
+      return { success: false, error: "Maximum of 30 days allowed per routine." };
+    }
+
+    const nextDayNumber = existingDays.length > 0 ? existingDays[0].dayNumber + 1 : 1;
+
+    await prisma.routineDay.create({
+      data: {
+        userId: user.id,
+        routineProfileId: profileId,
+        dayNumber: nextDayNumber,
+        dayName: `Day ${nextDayNumber}`,
+        description: "Workout Day",
+        isRestDay: false,
+        exerciseIds: []
+      }
+    });
+
+    revalidatePath("/studio");
+    revalidatePath("/");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to add routine day:", error);
+    return { success: false, error: "Failed to add routine day" };
+  }
+}
+
+export async function deleteRoutineDay(dayId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const dayToDelete = await prisma.routineDay.findUnique({
+      where: { id: dayId, userId: user.id }
+    });
+
+    if (!dayToDelete) return { success: false, error: "Not found" };
+
+    const profileId = dayToDelete.routineProfileId;
+
+    await prisma.routineDay.delete({
+      where: { id: dayId }
+    });
+
+    // Re-index remaining days
+    const remainingDays = await prisma.routineDay.findMany({
+      where: { userId: user.id, routineProfileId: profileId },
+      orderBy: { dayNumber: 'asc' }
+    });
+
+    for (let i = 0; i < remainingDays.length; i++) {
+      if (remainingDays[i].dayNumber !== i + 1) {
+        await prisma.routineDay.update({
+          where: { id: remainingDays[i].id },
+          data: { dayNumber: i + 1 }
+        });
+      }
+    }
+
+    revalidatePath("/studio");
+    revalidatePath("/");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete routine day:", error);
+    return { success: false, error: "Failed to delete routine day" };
   }
 }
 
@@ -945,5 +1030,289 @@ export async function getWorkoutHistory(query: string = "", skip: number = 0, ta
   } catch (error) {
     console.error("Failed to get workout history:", error);
     return { success: false, error: "Failed to get workout history" };
+  }
+}
+export async function publishToMarketplace(profileId: string, description: string, ownerName: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const profile = await prisma.routineProfile.findUnique({
+      where: { id: profileId },
+      include: {
+        routineDays: {
+          include: { exercises: true }
+        }
+      }
+    });
+
+    if (!profile || profile.userId !== user.id) {
+      return { success: false, error: "Profile not found" };
+    }
+
+    const dataSnapshot = JSON.parse(JSON.stringify(profile));
+
+    const existing = await prisma.marketplaceProfile.findFirst({
+      where: {
+        ownerId: user.id,
+        name: profile.name
+      }
+    });
+
+    let publishedId = existing?.id;
+
+    if (existing) {
+      await prisma.marketplaceProfile.update({
+        where: { id: existing.id },
+        data: {
+          description,
+          ownerName,
+          ownerPicUrl: user.profilePicUrl,
+          data: dataSnapshot,
+          sourceProfileId: profile.id
+        }
+      });
+    } else {
+      const created = await prisma.marketplaceProfile.create({
+        data: {
+          ownerId: user.id,
+          ownerName,
+          ownerEmail: user.email,
+          ownerPicUrl: user.profilePicUrl,
+          name: profile.name,
+          description,
+          data: dataSnapshot,
+          sourceProfileId: profile.id
+        }
+      });
+      publishedId = created.id;
+    }
+
+    if (publishedId) {
+      await prisma.routineProfile.update({
+        where: { id: profile.id },
+        data: { publishedMarketplaceId: publishedId }
+      });
+    }
+
+    revalidatePath("/routines");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Publish error:", error);
+    return { success: false, error: "Failed to publish profile: " + (error.message || String(error)) };
+  }
+}
+
+export async function getMarketplaceProfiles() {
+  try {
+    const profiles = await prisma.marketplaceProfile.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    return { success: true, data: profiles };
+  } catch (error) {
+    console.error("Failed to get marketplace profiles:", error);
+    return { success: false, error: "Failed to get profiles" };
+  }
+}
+
+export async function copyMarketplaceProfile(marketplaceProfileId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const marketProfile = await prisma.marketplaceProfile.findUnique({
+      where: { id: marketplaceProfileId }
+    });
+
+    if (!marketProfile) return { success: false, error: "Not found" };
+
+    const data: any = marketProfile.data;
+
+    const newProfile = await prisma.routineProfile.create({
+      data: {
+        userId: user.id,
+        name: `${data.name}`,
+        isActive: false,
+        sourceMarketplaceId: marketProfile.id,
+        sourceMarketplaceUpdatedAt: marketProfile.updatedAt
+      }
+    });
+
+    if (data.routineDays && Array.isArray(data.routineDays)) {
+      for (const day of data.routineDays) {
+        const createdExerciseIds: string[] = [];
+        if (day.exercises && Array.isArray(day.exercises)) {
+          for (const ex of day.exercises) {
+            let copiedImageUrl = ex.imageUrl;
+            
+            // If the image is a vercel blob, we must create a true copy of it
+            // otherwise when the original owner deletes their exercise, our image breaks (404)
+            if (copiedImageUrl && copiedImageUrl.includes('vercel-storage.com')) {
+              try {
+                const extension = copiedImageUrl.split('.').pop() || 'jpg';
+                const newPath = `exercises/${user.id}-${Date.now()}-${ex.name.replace(/[^a-zA-Z0-9]/g, '-')}.${extension}`;
+                const newBlob = await copy(copiedImageUrl, newPath, { access: 'public' });
+                copiedImageUrl = newBlob.url;
+              } catch (e) {
+                console.error("Failed to copy blob:", e);
+                // Fallback to original URL if copy fails, though it may 404 later
+              }
+            }
+
+            const newEx = await prisma.exerciseConfig.create({
+              data: {
+                userId: user.id,
+                name: ex.name,
+                sets: ex.sets,
+                reps: ex.reps,
+                targetMuscle: ex.targetMuscle,
+                rest: ex.rest,
+                notes: ex.notes,
+                imageUrl: copiedImageUrl
+              }
+            });
+            createdExerciseIds.push(newEx.id);
+          }
+        }
+
+        await prisma.routineDay.create({
+          data: {
+            userId: user.id,
+            routineProfileId: newProfile.id,
+            dayNumber: day.dayNumber,
+            dayName: day.dayName,
+            description: day.description,
+            isRestDay: day.isRestDay,
+            exerciseIds: createdExerciseIds
+          }
+        });
+      }
+    }
+
+    revalidatePath("/routines");
+    return { success: true };
+  } catch (error) {
+    console.error("Copy error:", error);
+    return { success: false, error: "Failed to copy profile" };
+  }
+}
+
+export async function updateMarketplaceProfile(id: string, name: string, description: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+    const profile = await prisma.marketplaceProfile.findUnique({ where: { id } });
+    if (!profile || profile.ownerId !== user.id) return { success: false, error: 'Not found or unauthorized' };
+    await prisma.marketplaceProfile.update({ where: { id }, data: { name, description } });
+    revalidatePath('/routines');
+    return { success: true };
+  } catch (error) {
+    console.error('Update error:', error);
+    return { success: false, error: 'Failed to update' };
+  }
+}
+
+export async function deleteMarketplaceProfile(id: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+    const profile = await prisma.marketplaceProfile.findUnique({ where: { id } });
+    if (!profile || profile.ownerId !== user.id) return { success: false, error: 'Not found or unauthorized' };
+    await prisma.marketplaceProfile.delete({ where: { id } });
+    
+    // Unlink any local profiles that were pointing to this marketplace profile
+    await prisma.routineProfile.updateMany({
+      where: { publishedMarketplaceId: id },
+      data: { publishedMarketplaceId: null }
+    });
+    
+    revalidatePath('/routines');
+    return { success: true };
+  } catch (error) {
+    console.error('Delete error:', error);
+    return { success: false, error: 'Failed to delete' };
+  }
+}
+
+export async function updateMarketplaceProfileLocalCopy(marketplaceProfileId: string, localProfileId: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    const marketProfile = await prisma.marketplaceProfile.findUnique({ where: { id: marketplaceProfileId } });
+    if (!marketProfile) return { success: false, error: 'Marketplace profile not found' };
+
+    const localProfile = await prisma.routineProfile.findUnique({ where: { id: localProfileId, userId: user.id } });
+    if (!localProfile) return { success: false, error: 'Local profile not found' };
+
+    // Delete all existing days and exercises for this profile
+    const days = await prisma.routineDay.findMany({ where: { routineProfileId: localProfile.id } });
+    for (const day of days) {
+      if (day.exerciseIds.length > 0) {
+        await prisma.exerciseConfig.deleteMany({ where: { id: { in: day.exerciseIds } } });
+      }
+    }
+    await prisma.routineDay.deleteMany({ where: { routineProfileId: localProfile.id } });
+
+    // Now insert the new ones from marketProfile
+    const data: any = marketProfile.data;
+    if (data.routineDays && Array.isArray(data.routineDays)) {
+      for (const day of data.routineDays) {
+        const createdExerciseIds: string[] = [];
+        if (day.exercises && Array.isArray(day.exercises)) {
+          for (const ex of day.exercises) {
+            let copiedImageUrl = ex.imageUrl;
+            if (copiedImageUrl && copiedImageUrl.includes('vercel-storage.com')) {
+              try {
+                const extension = copiedImageUrl.split('.').pop() || 'jpg';
+                const newPath = `exercises/${user.id}-${Date.now()}-${ex.name.replace(/[^a-zA-Z0-9]/g, '-')}.${extension}`;
+                const newBlob = await copy(copiedImageUrl, newPath, { access: 'public' });
+                copiedImageUrl = newBlob.url;
+              } catch (e) {
+                console.error('Failed to copy blob:', e);
+              }
+            }
+            const newEx = await prisma.exerciseConfig.create({
+              data: {
+                userId: user.id,
+                name: ex.name,
+                sets: ex.sets,
+                reps: ex.reps,
+                targetMuscle: ex.targetMuscle,
+                rest: ex.rest,
+                notes: ex.notes,
+                imageUrl: copiedImageUrl
+              }
+            });
+            createdExerciseIds.push(newEx.id);
+          }
+        }
+        await prisma.routineDay.create({
+          data: {
+            userId: user.id,
+            routineProfileId: localProfile.id,
+            dayNumber: day.dayNumber,
+            dayName: day.dayName,
+            description: day.description,
+            isRestDay: day.isRestDay,
+            exerciseIds: createdExerciseIds
+          }
+        });
+      }
+    }
+
+    // Update local profile timestamps
+    await prisma.routineProfile.update({
+      where: { id: localProfile.id },
+      data: {
+        sourceMarketplaceUpdatedAt: marketProfile.updatedAt
+      }
+    });
+
+    revalidatePath('/routines');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Update local copy error:', error);
+    return { success: false, error: 'Failed to update copy: ' + error.message };
   }
 }

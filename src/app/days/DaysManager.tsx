@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
-import { updateRoutineDay, createRoutineProfile, activateRoutineProfile, updateRoutineProfile, deleteRoutineProfile } from "@/app/actions";
-import { Loader2, Plus, Trash2, ArrowUp, ArrowDown, CheckCircle, Edit2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { updateRoutineDay, createRoutineProfile, activateRoutineProfile, updateRoutineProfile, deleteRoutineProfile, publishToMarketplace, addRoutineDay, deleteRoutineDay } from "@/app/actions";
+import { Loader2, Plus, Trash2, ArrowUp, ArrowDown, CheckCircle, Edit2, Globe, X, RefreshCw } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
+import AlertModal, { AlertType } from "@/components/ui/AlertModal";
 
 type Day = any;
 type Exercise = any;
@@ -13,14 +14,17 @@ export default function DaysManager({
   initialDays, 
   initialExercises, 
   profiles, 
-  currentProfileId 
+  currentProfileId,
+  publishedProfiles = [] 
 }: { 
   initialDays: Day[], 
   initialExercises: Exercise[], 
   profiles: Profile[], 
-  currentProfileId: string 
+  currentProfileId: string,
+  publishedProfiles?: any[]
 }) {
   const router = useRouter();
+  const pathname = usePathname() || "/routines";
   const [isPending, startTransition] = useTransition();
 
   const [selectedDayId, setSelectedDayId] = useState<string>(initialDays[0]?.id || "");
@@ -29,6 +33,13 @@ export default function DaysManager({
 
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [newProfileName, setNewProfileName] = useState("");
+
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [publishName, setPublishName] = useState("");
+  const [publishDesc, setPublishDesc] = useState("");
+  const [alertConfig, setAlertConfig] = useState<{isOpen: boolean, title: string, message: string, type: AlertType, onConfirm?: () => void}>({
+    isOpen: false, title: "", message: "", type: "info"
+  });
 
   // When initialDays changes (e.g. via navigation), reset the selected day
   useEffect(() => {
@@ -41,14 +52,22 @@ export default function DaysManager({
     }
   }, [initialDays]);
 
-  const currentProfile = profiles.find(p => p.id === currentProfileId);
+  const currentProfile = profiles.find(p => p.id === currentProfileId) || profiles[0];
   const isCurrentActive = currentProfile?.isActive;
+
+  const currentMarketplaceProfile = currentProfile?.publishedMarketplaceId 
+    ? publishedProfiles?.find(p => p.id === currentProfile?.publishedMarketplaceId) 
+    : null;
+    
+  const hasUnpublishedEdits = currentProfile && currentMarketplaceProfile 
+    ? new Date(currentProfile.updatedAt || 0).getTime() > new Date(currentMarketplaceProfile.updatedAt || 0).getTime()
+    : false;
 
   const [isEditingProfileName, setIsEditingProfileName] = useState(false);
   const [editingNameValue, setEditingNameValue] = useState("");
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    router.push(`/days?profileId=${e.target.value}`);
+    router.push(`${pathname}?profileId=${e.target.value}`);
   };
 
   const handleEditProfileName = () => {
@@ -67,10 +86,17 @@ export default function DaysManager({
 
   const handleDeleteProfile = () => {
     if (!currentProfile || currentProfile.name === "Default Profile") return;
-    if (!confirm(`Are you sure you want to delete profile "${currentProfile.name}"? All its days will be permanently deleted.`)) return;
-    startTransition(async () => {
-      await deleteRoutineProfile(currentProfile.id);
-      router.push("/days");
+    setAlertConfig({
+      isOpen: true,
+      title: "Delete Profile?",
+      message: `Are you sure you want to delete "${currentProfile.name}"? All its days will be permanently deleted.`,
+      type: "warning",
+      onConfirm: () => {
+        startTransition(async () => {
+          await deleteRoutineProfile(currentProfile.id);
+          router.push(pathname);
+        });
+      }
     });
   };
 
@@ -81,15 +107,35 @@ export default function DaysManager({
       if (res.success && res.data) {
         setShowProfileModal(false);
         setNewProfileName("");
-        router.push(`/days?profileId=${res.data.id}`);
+        router.push(`${pathname}?profileId=${res.data.id}`);
+      }
+    });
+  };
+
+  const handlePublishProfile = () => {
+    if (!currentProfileId || !publishName) return;
+    startTransition(async () => {
+      const res = await publishToMarketplace(currentProfileId, publishDesc, publishName);
+      if (res.success) {
+        setAlertConfig({ isOpen: true, title: "Success", message: "Published to Marketplace!", type: "success" });
+        setShowPublishModal(false);
+      } else {
+        setAlertConfig({ isOpen: true, title: "Publishing Failed", message: res.error || "An error occurred.", type: "error" });
       }
     });
   };
 
   const handleActivateProfile = () => {
-    if (!confirm(`Are you sure you want to activate ${currentProfile?.name}? This will reset your current cycle progress!`)) return;
-    startTransition(async () => {
-      await activateRoutineProfile(currentProfileId);
+    setAlertConfig({
+      isOpen: true,
+      title: "Switch Active Profile?",
+      message: `Activate "${currentProfile?.name}"? This will reset your current cycle progress and all day completion states.`,
+      type: "warning",
+      onConfirm: () => {
+        startTransition(async () => {
+          await activateRoutineProfile(currentProfileId);
+        });
+      }
     });
   };
 
@@ -102,6 +148,33 @@ export default function DaysManager({
         isRestDay: dayForm.isRestDay,
         exerciseIds: dayForm.exerciseIds,
       });
+    });
+  };
+
+  const handleAddDay = () => {
+    if (!currentProfileId) return;
+    startTransition(async () => {
+      const res = await addRoutineDay(currentProfileId);
+      if (!res.success) {
+        setAlertConfig({ isOpen: true, title: "Cannot Add Day", message: res.error || "Failed to add day.", type: "error" });
+      }
+    });
+  };
+
+  const handleDeleteDay = (dayId: string, dayName: string) => {
+    setAlertConfig({
+      isOpen: true,
+      title: "Delete Day?",
+      message: `Are you sure you want to delete "${dayName}"? All its exercises will be unlinked and remaining days will be re-numbered.`,
+      type: "warning",
+      onConfirm: () => {
+        startTransition(async () => {
+          const res = await deleteRoutineDay(dayId);
+          if (!res.success) {
+            setAlertConfig({ isOpen: true, title: "Error", message: res.error || "Failed to delete day.", type: "error" });
+          }
+        });
+      }
     });
   };
 
@@ -131,14 +204,6 @@ export default function DaysManager({
 
   return (
     <div className="space-y-6 pb-20">
-      <header className="flex items-center justify-between pb-2">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-primary">Days</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Configure your routine days
-          </p>
-        </div>
-      </header>
 
       {isPending && (
         <div className="fixed inset-0 bg-background/50 backdrop-blur-sm z-[100] flex items-center justify-center">
@@ -155,7 +220,7 @@ export default function DaysManager({
               <select 
                 value={currentProfileId}
                 onChange={handleProfileChange}
-                className="flex-1 bg-background border border-muted rounded-xl p-2 font-semibold focus:border-primary transition-colors"
+                className="flex-1 min-w-0 bg-background border border-muted rounded-xl p-2 font-semibold focus:border-primary transition-colors text-ellipsis"
               >
                 {profiles.map(p => (
                   <option key={p.id} value={p.id}>
@@ -174,13 +239,37 @@ export default function DaysManager({
             )}
             
             {!isEditingProfileName ? (
-              <button 
-                onClick={() => setShowProfileModal(true)}
-                className="bg-primary/10 text-primary p-2 rounded-xl border border-primary/20 hover:bg-primary/20 transition-colors shrink-0"
-                title="Create New Profile"
-              >
-                <Plus size={20} />
-              </button>
+              <>
+                <button 
+                  onClick={() => setShowProfileModal(true)}
+                  className="bg-primary/10 text-primary p-2 rounded-xl border border-primary/20 hover:bg-primary/20 transition-colors shrink-0"
+                  title="Create New Profile"
+                >
+                  <Plus size={20} />
+                </button>
+                {currentProfile?.publishedMarketplaceId ? (
+                  <button 
+                    onClick={() => setShowPublishModal(true)}
+                    disabled={!hasUnpublishedEdits}
+                    className={`p-2 rounded-xl border transition-colors shrink-0 ${
+                      hasUnpublishedEdits 
+                        ? "bg-secondary/10 text-secondary border-secondary/20 hover:bg-secondary/20" 
+                        : "bg-muted text-muted-foreground border-muted opacity-50 cursor-not-allowed"
+                    }`}
+                    title={hasUnpublishedEdits ? "Republish to Marketplace" : "No new changes to republish"}
+                  >
+                    <RefreshCw size={20} />
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => setShowPublishModal(true)}
+                    className="bg-primary/10 text-primary p-2 rounded-xl border border-primary/20 hover:bg-primary/20 transition-colors shrink-0"
+                    title="Share to Marketplace"
+                  >
+                    <Globe size={20} />
+                  </button>
+                )}
+              </>
             ) : (
               <button 
                 onClick={handleSaveProfileName}
@@ -225,19 +314,45 @@ export default function DaysManager({
 
       {dayForm && (
         <div className="space-y-6">
-          <select 
-            className="w-full bg-card border border-muted rounded-xl p-3 text-foreground font-semibold"
-            value={selectedDayId}
-            onChange={(e) => {
-              const id = e.target.value;
-              setSelectedDayId(id);
-              setDayForm(initialDays.find(d => d.id === id));
-            }}
-          >
-            {initialDays.map(d => (
-              <option key={d.id} value={d.id}>Day {d.dayNumber}: {d.dayName}</option>
-            ))}
-          </select>
+          <div className="flex gap-2 items-center">
+            <select 
+              className="flex-1 bg-card border border-muted rounded-xl p-3 text-foreground font-semibold"
+              value={selectedDayId}
+              onChange={(e) => {
+                const id = e.target.value;
+                setSelectedDayId(id);
+                setDayForm(initialDays.find(d => d.id === id));
+              }}
+            >
+              {initialDays.map(d => (
+                <option key={d.id} value={d.id}>Day {d.dayNumber}: {d.dayName}</option>
+              ))}
+            </select>
+
+            {/* Add Day icon button */}
+            {initialDays.length < 30 && (
+              <button
+                onClick={handleAddDay}
+                disabled={isPending}
+                title="Add New Day"
+                className="shrink-0 bg-primary/10 text-primary p-3 rounded-xl border border-primary/20 hover:bg-primary/20 transition-colors disabled:opacity-50"
+              >
+                <Plus size={20} />
+              </button>
+            )}
+          </div>
+
+          {/* Delete Day button */}
+          {dayForm && initialDays.length > 1 && (
+            <div className="flex justify-end">
+              <button
+                onClick={() => handleDeleteDay(dayForm.id, dayForm.dayName)}
+                className="flex items-center gap-1.5 text-xs text-red-500 font-bold hover:bg-red-500/10 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                <Trash2 size={14} /> Delete This Day
+              </button>
+            </div>
+          )}
 
           <div className="bg-card border border-muted rounded-xl p-4 space-y-4">
             <div>
@@ -336,7 +451,7 @@ export default function DaysManager({
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                This will generate 7 blank routine days linked to this profile. You can customize them afterwards.
+                This will create 1 blank day linked to this profile. You can add more days (up to 30) and customize them afterwards.
               </p>
             </div>
             <div className="p-4 border-t border-muted flex gap-3 bg-muted/20">
@@ -346,6 +461,73 @@ export default function DaysManager({
           </div>
         </div>
       )}
+
+      {/* PUBLISH MODAL */}
+      {showPublishModal && (
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-card w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-200 border border-muted">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-black text-foreground">
+                {currentProfile?.publishedMarketplaceId ? "Republish Updates" : "Publish Profile"}
+              </h3>
+              <button onClick={() => setShowPublishModal(false)} className="text-muted-foreground hover:bg-muted p-2 rounded-full transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              {currentProfile?.publishedMarketplaceId 
+                ? `Sync your latest changes for "${currentProfile?.name}" to the marketplace.`
+                : `Share "${currentProfile?.name}" with the community. People can copy this template.`
+              }
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">Your Display Name</label>
+                <input 
+                  type="text" 
+                  value={publishName}
+                  onChange={e => setPublishName(e.target.value)}
+                  placeholder="e.g. John Doe"
+                  className="w-full bg-background border border-muted rounded-xl p-3 text-sm font-semibold focus:border-primary transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">Description</label>
+                <textarea 
+                  value={publishDesc}
+                  onChange={e => setPublishDesc(e.target.value)}
+                  placeholder="e.g. A 4-day upper/lower split focused on strength."
+                  className="w-full bg-background border border-muted rounded-xl p-3 text-sm font-semibold focus:border-primary transition-colors resize-none h-24"
+                />
+              </div>
+            </div>
+            <div className="mt-6 flex gap-3">
+              <button 
+                onClick={() => setShowPublishModal(false)}
+                className="flex-1 py-3 bg-muted text-muted-foreground rounded-xl font-bold text-sm hover:bg-muted/80 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handlePublishProfile}
+                disabled={!publishName || isPending}
+                className="flex-1 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors shadow-md disabled:opacity-50"
+              >
+                {isPending ? "Publishing..." : "Publish"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <AlertModal 
+        isOpen={alertConfig.isOpen}
+        onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false, onConfirm: undefined }))}
+        onConfirm={alertConfig.onConfirm}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+      />
     </div>
   );
 }

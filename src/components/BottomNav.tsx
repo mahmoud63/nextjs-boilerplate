@@ -11,8 +11,8 @@ export default function BottomNav() {
 
   const navItems = [
     { label: "Home", href: "/", icon: Home },
-    { label: "Exercises", href: "/exercises", icon: Dumbbell },
-    { label: "Days", href: "/days", icon: CalendarDays },
+    { label: "Routines", href: "/routines", icon: CalendarDays },
+    { label: "Marketplace", href: "/marketplace", icon: Dumbbell },
     { label: "History", href: "/history", icon: History },
     { label: "Settings", href: "/settings", icon: Settings },
   ];

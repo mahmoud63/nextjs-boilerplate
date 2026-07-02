@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { getCurrentUser } from '@/app/actions';
-import { UserCircle } from 'lucide-react';
+import { UserCircle, Info } from 'lucide-react';
 import { BEAST_LOGO_B64 } from '@/lib/logo';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -25,6 +25,9 @@ export default async function Header() {
           </span>
         </Link>
         <div className="flex items-center gap-4">
+          <Link href="/about" className="text-muted-foreground hover:text-primary transition-colors">
+            <Info size={24} />
+          </Link>
           <ThemeToggle />
           {user ? (
             <Link

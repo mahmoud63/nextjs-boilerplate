@@ -64,13 +64,17 @@ model ExerciseLog {
 }
 
 model RoutineProfile {
-  id          String       @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String       @db.ObjectId
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name        String
-  isActive    Boolean      @default(false)
-  activatedAt DateTime?
-  routineDays RoutineDay[]
+  id                     String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId                 String       @db.ObjectId
+  user                   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                   String
+  isActive               Boolean      @default(false)
+  activatedAt            DateTime?
+  publishedMarketplaceId String?      @db.ObjectId
+  sourceMarketplaceId    String?      @db.ObjectId
+  sourceMarketplaceUpdatedAt DateTime?
+  updatedAt              DateTime?    @updatedAt
+  routineDays            RoutineDay[]
 }
 
 model RoutineDay {
@@ -105,4 +109,20 @@ model ExerciseConfig {
   // Many-to-Many Relationship mapped in Prisma MongoDB
   routineDayIds String[] @db.ObjectId
   routineDays   RoutineDay[] @relation(fields: [routineDayIds], references: [id])
+}
+
+model MarketplaceProfile {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  ownerId     String   @db.ObjectId
+  ownerName   String
+  ownerEmail  String
+  ownerPicUrl String?
+  sourceProfileId String? @db.ObjectId
+  name        String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Contains the deep-copy snapshot of Days and Exercises
+  data        Json     
 }

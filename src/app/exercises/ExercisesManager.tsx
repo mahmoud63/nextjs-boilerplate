@@ -79,14 +79,6 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
 
   return (
     <div className="space-y-6 pb-20">
-      <header className="flex items-center justify-between pb-2">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-primary">Exercises</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Manage your exercise library
-          </p>
-        </div>
-      </header>
 
       {isPending && (
         <div className="fixed inset-0 bg-background/50 backdrop-blur-sm z-[100] flex items-center justify-center">
