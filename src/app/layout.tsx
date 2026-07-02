@@ -19,10 +19,14 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   title: "Beast Tracker",
   description: "Track your daily exercise routine and unleash your inner beast.",
+  icons: {
+    icon: "/app-icon.png",
+    apple: "/app-icon.png",
+  },
   openGraph: {
     title: "Beast Tracker",
     description: "Track your daily exercise routine and unleash your inner beast.",
-    images: ['/icon.svg'],
+    images: ['/app-icon.png'],
     type: "website",
   },
   manifest: "/manifest.json",

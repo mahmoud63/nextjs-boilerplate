@@ -22,7 +22,7 @@ export default function SplashScreen() {
     >
       <div className="flex flex-col items-center gap-6 animate-in zoom-in-50 fade-in duration-700">
         <Image 
-          src="/icon.svg" 
+          src="/app-icon.png" 
           alt="Beast Tracker Icon" 
           width={100} 
           height={100} 

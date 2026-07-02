@@ -10,7 +10,7 @@ export default async function Header() {
     <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md">
       <div className="max-w-md mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
-          <Image src="/icon.svg" alt="App Icon" width={40} height={40} className="rounded-lg bg-black shadow-sm" unoptimized={true} />
+          <Image src="/app-icon.png" alt="App Icon" width={40} height={40} className="rounded-lg bg-black shadow-sm" unoptimized={true} />
           <span className="font-bold tracking-tight text-xl text-foreground uppercase">Beast Tracker</span>
         </Link>
         {user ? (
