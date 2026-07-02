@@ -49,7 +49,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <div className="mb-8 flex flex-col items-center gap-4">
-        <Image src="/app-icon.png" alt="Beast Tracker Icon" width={64} height={64} className="rounded-2xl bg-black shadow-lg" unoptimized={true} />
+        <Image src="/icon.svg" alt="Beast Tracker Icon" width={64} height={64} className="rounded-2xl bg-black shadow-lg" unoptimized={true} />
         <h1 className="text-3xl font-black tracking-tighter uppercase text-primary">Beast Tracker</h1>
       </div>
       <div className="w-full max-w-sm bg-card border border-muted p-6 rounded-2xl shadow-xl">

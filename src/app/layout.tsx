@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Beast Tracker",
     description: "Track your daily exercise routine and unleash your inner beast.",
-    images: ['/app-icon.png'],
+    images: ['/icon.svg'],
     type: "website",
   },
   manifest: "/manifest.json",
