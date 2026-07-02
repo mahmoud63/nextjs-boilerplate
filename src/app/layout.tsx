@@ -20,13 +20,13 @@ export const metadata: Metadata = {
   title: "Beast Tracker",
   description: "Track your daily exercise routine and unleash your inner beast.",
   icons: {
-    icon: "/app-icon.png",
-    apple: "/app-icon.png",
+    icon: "/beast-logo-v2.png",
+    apple: "/beast-logo-v2.png",
   },
   openGraph: {
     title: "Beast Tracker",
     description: "Track your daily exercise routine and unleash your inner beast.",
-    images: ['/app-icon.png'],
+    images: ['/beast-logo-v2.png'],
     type: "website",
   },
   manifest: "/manifest.json",
