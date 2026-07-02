@@ -91,19 +91,19 @@ export default function HistoryManager({
         <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
           <Scale size={18} className="text-primary" /> Log New Weight
         </h3>
-        <form onSubmit={handleLogWeight} className="flex gap-3">
+        <form onSubmit={handleLogWeight} className="flex gap-2">
           <input 
             type="number" 
             step="0.1"
             value={weight}
             onChange={e => setWeight(e.target.value)}
             placeholder="e.g. 85.5"
-            className="flex-1 bg-background border border-muted rounded-xl p-3 font-semibold focus:border-primary transition-colors"
+            className="flex-1 min-w-0 bg-background border border-muted rounded-xl p-3 font-semibold focus:border-primary transition-colors"
           />
           <button 
             type="submit" 
             disabled={isPending || !weight}
-            className="bg-foreground text-background px-6 rounded-xl font-bold disabled:opacity-50 flex items-center gap-2"
+            className="bg-foreground text-background px-4 shrink-0 rounded-xl font-bold disabled:opacity-50 flex items-center justify-center gap-1"
           >
             {isPending ? <Loader2 size={18} className="animate-spin" /> : <><Plus size={18} /> Add</>}
           </button>
