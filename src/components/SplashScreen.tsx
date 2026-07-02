@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 
+import { BEAST_LOGO_B64 } from "@/lib/logo";
+
 export default function SplashScreen() {
   const [show, setShow] = useState(true);
 
@@ -22,7 +24,7 @@ export default function SplashScreen() {
     >
       <div className="flex flex-col items-center gap-6 animate-in zoom-in-50 fade-in duration-700">
         <Image 
-          src="/beast-logo.jpg" 
+          src={BEAST_LOGO_B64} 
           alt="Beast Tracker Icon" 
           width={100} 
           height={100} 
