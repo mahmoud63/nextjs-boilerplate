@@ -9,9 +9,11 @@ datasource db {
 
 model User {
   id              String           @id @default(auto()) @map("_id") @db.ObjectId
-  username        String           @unique
+  email           String           @unique
   passwordHash    String
   height          Float
+  profilePicUrl   String?
+  isActive        Boolean          @default(false)
   weightLogs      WeightLog[]
   workoutSessions WorkoutSession[]
   routineProfiles RoutineProfile[]

@@ -12,19 +12,21 @@ export default function LoginPage() {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
   const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccessMsg("");
     
     startTransition(async () => {
       if (isLogin) {
-        const res = await login(username, password);
+        const res = await login(email, password);
         if (res.success) {
           router.push("/");
         } else {
@@ -37,9 +39,12 @@ export default function LoginPage() {
           setError("Height and weight must be numbers");
           return;
         }
-        const res = await signup(username, password, h, w);
+        const res = await signup(email, password, h, w);
         if (res.success) {
-          router.push("/");
+          setSuccessMsg(res.message || "Account created successfully.");
+          setIsLogin(true); // Switch to login view
+          setEmail("");
+          setPassword("");
         } else {
           setError(res.error || "Signup failed");
         }
@@ -63,15 +68,21 @@ export default function LoginPage() {
             {error}
           </div>
         )}
+        
+        {successMsg && (
+          <div className="bg-green-500/10 text-green-500 p-3 rounded-lg text-sm mb-4 border border-green-500/20">
+            {successMsg}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-bold text-muted-foreground block mb-1">Username</label>
+            <label className="text-xs font-bold text-muted-foreground block mb-1">Email</label>
             <input 
-              type="text" 
+              type="email" 
               required 
-              value={username} 
-              onChange={e => setUsername(e.target.value)} 
+              value={email} 
+              onChange={e => setEmail(e.target.value)} 
               className="w-full bg-background border border-muted rounded-lg p-3 text-sm" 
             />
           </div>
@@ -128,6 +139,7 @@ export default function LoginPage() {
             onClick={() => {
               setIsLogin(!isLogin);
               setError("");
+              setSuccessMsg("");
             }}
             className="text-sm text-muted-foreground hover:text-primary transition-colors"
           >

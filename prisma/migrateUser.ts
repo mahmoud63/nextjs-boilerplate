@@ -14,20 +14,21 @@ async function main() {
   console.log('Starting user migration...');
 
   // 1. Create Mahmoud.Kamal
-  const username = "Mahmoud.Kamal";
-  let user = await prisma.user.findUnique({ where: { username } });
+  const email = "Mahmoud.Kamal@example.com";
+  let user = await prisma.user.findUnique({ where: { email } });
 
   if (!user) {
     user = await prisma.user.create({
       data: {
-        username,
+        email,
         passwordHash: hashPassword('MMK007'),
         height: 175,
+        isActive: true,
       }
     });
-    console.log('Created user:', user.username);
+    console.log('Created user:', user.email);
   } else {
-    console.log('User already exists:', user.username);
+    console.log('User already exists:', user.email);
   }
 
   // 2. Add Initial Weight Log
@@ -55,19 +56,19 @@ async function main() {
   for (const session of allSessions) {
     await prisma.workoutSession.update({ where: { id: session.id }, data: { userId: user.id } });
   }
-  console.log(`Updated ${allSessions.length} WorkoutSessions to belong to ${username}`);
+  console.log(`Updated ${allSessions.length} WorkoutSessions to belong to ${email}`);
 
   const allDays = await prisma.routineDay.findMany();
   for (const day of allDays) {
     await prisma.routineDay.update({ where: { id: day.id }, data: { userId: user.id } });
   }
-  console.log(`Updated ${allDays.length} RoutineDays to belong to ${username}`);
+  console.log(`Updated ${allDays.length} RoutineDays to belong to ${email}`);
 
   const allExercises = await prisma.exerciseConfig.findMany();
   for (const ex of allExercises) {
     await prisma.exerciseConfig.update({ where: { id: ex.id }, data: { userId: user.id } });
   }
-  console.log(`Updated ${allExercises.length} ExerciseConfigs to belong to ${username}`);
+  console.log(`Updated ${allExercises.length} ExerciseConfigs to belong to ${email}`);
 
   console.log('Migration completed successfully!');
 }

@@ -4,6 +4,7 @@ import prisma from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import { cookies } from "next/headers";
+import { put } from "@vercel/blob";
 
 // --- AUTHENTICATION ACTIONS ---
 
@@ -34,11 +35,15 @@ export async function getCurrentUser() {
   return session.user;
 }
 
-export async function login(username: string, password: string) {
+export async function login(email: string, password: string) {
   try {
-    const user = await prisma.user.findUnique({ where: { username } });
+    const user = await prisma.user.findUnique({ where: { email } });
     if (!user || !verifyPassword(password, user.passwordHash)) {
-      return { success: false, error: "Invalid username or password" };
+      return { success: false, error: "Invalid email or password" };
+    }
+
+    if (!user.isActive) {
+      return { success: false, error: "Account is inactive. Please contact administrator." };
     }
 
     const token = crypto.randomBytes(32).toString('hex');
@@ -62,14 +67,14 @@ export async function login(username: string, password: string) {
   }
 }
 
-export async function signup(username: string, password: string, height: number, initialWeight: number) {
+export async function signup(email: string, password: string, height: number, initialWeight: number) {
   try {
-    const existing = await prisma.user.findUnique({ where: { username } });
-    if (existing) return { success: false, error: "Username already exists" };
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) return { success: false, error: "Email already exists" };
 
     const user = await prisma.user.create({
       data: {
-        username,
+        email,
         passwordHash: hashPassword(password),
         height,
       }
@@ -107,18 +112,7 @@ export async function signup(username: string, password: string, height: number,
       });
     }
 
-    // Auto login
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30);
-
-    await prisma.session.create({
-      data: { userId: user.id, token, expiresAt }
-    });
-
-    (await cookies()).set('session_token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', expires: expiresAt, path: '/' });
-    
-    return { success: true };
+    return { success: true, message: "Account created successfully. Please wait for an administrator to activate your account." };
   } catch (error) {
     console.error("Signup error:", error);
     return { success: false, error: "An error occurred during signup" };
@@ -835,5 +829,46 @@ export async function changePassword(oldPass: string, newPass: string) {
   } catch (error) {
     console.error("Failed to change password:", error);
     return { success: false, error: "Failed to change password" };
+  }
+}
+
+// --- IMAGE UPLOAD ACTIONS ---
+
+export async function uploadImage(formData: FormData) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    const file = formData.get('file') as File | null;
+    if (!file) return { success: false, error: 'No file provided' };
+
+    if (file.size > 3 * 1024 * 1024) {
+      return { success: false, error: 'File exceeds 3MB limit' };
+    }
+
+    const blob = await put(file.name, file, { access: 'public' });
+    return { success: true, url: blob.url };
+  } catch (error: any) {
+    console.error('Failed to upload image:', error);
+    return { success: false, error: error.message || 'Failed to upload image' };
+  }
+}
+
+export async function updateProfilePicture(url: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { profilePicUrl: url }
+    });
+
+    revalidatePath('/settings');
+    revalidatePath('/');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Failed to update profile picture:', error);
+    return { success: false, error: error.message || 'Failed to update profile picture' };
   }
 }

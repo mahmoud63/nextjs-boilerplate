@@ -4,6 +4,7 @@ import { getCurrentUser, getWeightHistory } from "@/app/actions";
 import { redirect } from "next/navigation";
 import { User, LogOut, AlertTriangle } from "lucide-react";
 import ChangePasswordForm from "./ChangePasswordForm";
+import ProfilePictureUpload from "@/components/ProfilePictureUpload";
 
 export default async function SettingsPage() {
   const user = await getCurrentUser();
@@ -35,18 +36,12 @@ export default async function SettingsPage() {
         </form>
       </header>
 
-      {/* User Profile Card */}
-      <div className="bg-card border border-muted p-5 rounded-2xl shadow-sm flex items-center gap-4">
-        <div className="w-16 h-16 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 border-2 border-primary/30">
-          <User size={32} />
-        </div>
-        <div>
-          <h2 className="text-xl font-black text-foreground">{user.username}</h2>
-          <p className="text-sm text-muted-foreground font-medium mt-1">
-            Height: {user.height} cm • Weight: {currentWeight ? `${currentWeight} kg` : 'N/A'}
-          </p>
-        </div>
-      </div>
+      <ProfilePictureUpload 
+        currentUrl={user.profilePicUrl || null} 
+        email={user.email} 
+        height={user.height} 
+        weight={currentWeight} 
+      />
 
       <ChangePasswordForm />
 

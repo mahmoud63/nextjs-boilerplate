@@ -16,8 +16,12 @@ export default async function Header() {
         </Link>
         {user ? (
           <Link href="/settings" className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
-            <span className="max-w-24 truncate">{user.username}</span>
-            <UserCircle size={24} />
+            <span className="max-w-24 truncate">{user.email}</span>
+            {user.profilePicUrl ? (
+              <img src={user.profilePicUrl} alt="Profile" className="w-8 h-8 rounded-full object-cover border border-muted" />
+            ) : (
+              <UserCircle size={24} />
+            )}
           </Link>
         ) : (
           <Link href="/login" className="text-sm font-bold text-primary">

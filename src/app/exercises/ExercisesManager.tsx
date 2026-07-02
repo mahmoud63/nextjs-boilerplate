@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { createExercise, updateExercise, deleteExercise } from "@/app/actions";
-import { Loader2, Plus, Edit2, Trash2 } from "lucide-react";
+import { createExercise, updateExercise, deleteExercise, uploadImage } from "@/app/actions";
+import { Loader2, Plus, Edit2, Trash2, Upload, ImageIcon } from "lucide-react";
+import ConfirmModal from "@/components/ConfirmModal";
 
 type Exercise = any;
 
@@ -12,6 +13,9 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
   const [editingEx, setEditingEx] = useState<Exercise | null>(null);
   const [exForm, setExForm] = useState({ name: "", sets: 3, reps: "12", targetMuscle: "", rest: "60 sec", notes: "", imageUrl: "" });
   const [showExModal, setShowExModal] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const handleSaveExercise = async () => {
     startTransition(async () => {
@@ -25,10 +29,40 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
     });
   };
 
-  const handleDeleteExercise = async (id: string) => {
-    if (!confirm("Are you sure? This will remove the exercise from all days.")) return;
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (file.size > 3 * 1024 * 1024) {
+      setUploadError("Image exceeds 3MB limit");
+      return;
+    }
+    
+    setUploadError("");
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
     startTransition(async () => {
-      await deleteExercise(id);
+      const res = await uploadImage(formData);
+      if (res.success && res.url) {
+        setExForm({ ...exForm, imageUrl: res.url });
+      } else {
+        setUploadError(res.error || "Failed to upload");
+      }
+      setIsUploading(false);
+    });
+  };
+
+  const handleDeleteExercise = async (id: string) => {
+    setDeleteConfirmId(id);
+  };
+  
+  const confirmDelete = async () => {
+    if (!deleteConfirmId) return;
+    startTransition(async () => {
+      await deleteExercise(deleteConfirmId);
+      setDeleteConfirmId(null);
     });
   };
 
@@ -65,8 +99,13 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
           {initialExercises.map(ex => (
             <div key={ex.id} className="bg-card border border-muted p-4 rounded-xl flex items-start justify-between group">
               <div>
-                <h3 className="font-bold text-foreground">{ex.name}</h3>
-                <p className="text-xs text-muted-foreground mt-1">{ex.sets} sets × {ex.reps} • {ex.targetMuscle}</p>
+                <div className="flex items-center gap-3">
+                  {ex.imageUrl && <img src={ex.imageUrl} alt={ex.name} className="w-12 h-12 object-cover rounded-xl bg-black/50 border border-muted" />}
+                  <div>
+                    <h3 className="font-bold text-foreground">{ex.name}</h3>
+                    <p className="text-xs text-muted-foreground mt-1">{ex.sets} sets × {ex.reps} • {ex.targetMuscle}</p>
+                  </div>
+                </div>
               </div>
               <div className="flex gap-2">
                 <button 
@@ -133,8 +172,40 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
                   <input type="text" value={exForm.notes || ""} onChange={e => setExForm({...exForm, notes: e.target.value})} className="w-full bg-background border border-muted rounded-lg p-2 text-sm" />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-muted-foreground block mb-1">Image URL (Optional)</label>
-                  <input type="text" value={exForm.imageUrl || ""} onChange={e => setExForm({...exForm, imageUrl: e.target.value})} placeholder="https://example.com/image.jpg" className="w-full bg-background border border-muted rounded-lg p-2 text-sm" />
+                  <label className="text-xs font-bold text-muted-foreground block mb-2">Exercise Image</label>
+                  {exForm.imageUrl ? (
+                    <div className="relative w-full h-40 rounded-xl overflow-hidden bg-muted group border border-muted">
+                      <img src={exForm.imageUrl} alt="Exercise" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6">
+                        <label className="cursor-pointer text-white flex flex-col items-center hover:scale-110 transition-transform">
+                          <Upload size={24} />
+                          <span className="text-xs mt-1 font-bold">Change</span>
+                          <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading || isPending} />
+                        </label>
+                        <button onClick={() => setExForm({...exForm, imageUrl: ""})} type="button" className="text-red-400 flex flex-col items-center hover:scale-110 transition-transform">
+                          <Trash2 size={24} />
+                          <span className="text-xs mt-1 font-bold">Remove</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-muted-foreground/30 rounded-xl cursor-pointer hover:bg-muted/10 transition-colors">
+                      {isUploading ? (
+                        <div className="flex flex-col items-center">
+                          <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
+                          <span className="text-sm font-semibold text-primary">Uploading...</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center">
+                          <ImageIcon className="w-8 h-8 text-muted-foreground mb-2" />
+                          <span className="text-sm font-semibold text-muted-foreground">Upload Image</span>
+                          <span className="text-xs text-muted-foreground/70 mt-1">Max 3MB</span>
+                        </div>
+                      )}
+                      <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading || isPending} />
+                    </label>
+                  )}
+                  {uploadError && <p className="text-red-500 text-xs mt-2 font-semibold">{uploadError}</p>}
                 </div>
               </div>
               <div className="p-4 border-t border-muted flex gap-3 bg-muted/20">
@@ -145,6 +216,15 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
           </div>
         )}
       </div>
+      <ConfirmModal 
+        isOpen={!!deleteConfirmId}
+        onClose={() => setDeleteConfirmId(null)}
+        onConfirm={confirmDelete}
+        title="Delete Exercise"
+        message="Are you sure you want to permanently delete this exercise? It will be removed from all your routines and past logs."
+        danger={true}
+        confirmText="Delete"
+      />
     </div>
   );
 }
