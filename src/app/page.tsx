@@ -121,7 +121,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
     }
   }
 
-  const hasAnyProgress = session !== null && session.exercises.length > 0;
+  const hasAnyProgress = session?.exercises && session.exercises.length > 0;
   const isDayCompleted = virtualStatus === "COMPLETED" || allCompleted;
   const isDaySkipped = virtualStatus === "SKIPPED";
   const hasFinishedState = isDayCompleted || isDaySkipped;
