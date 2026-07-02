@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { User, LogOut, AlertTriangle } from "lucide-react";
 import ChangePasswordForm from "./ChangePasswordForm";
 import ProfilePictureUpload from "@/components/ProfilePictureUpload";
+import EditProfileForm from "./EditProfileForm";
 
 export default async function SettingsPage() {
   const user = await getCurrentUser();
@@ -39,9 +40,13 @@ export default async function SettingsPage() {
       <ProfilePictureUpload 
         currentUrl={user.profilePicUrl || null} 
         email={user.email} 
+        name={(user as any).name || null}
+        gender={(user as any).gender || null}
         height={user.height} 
         weight={currentWeight} 
       />
+
+      <EditProfileForm initialName={(user as any).name as string | null} initialGender={(user as any).gender as string | null} />
 
       <ChangePasswordForm />
 

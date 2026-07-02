@@ -67,7 +67,7 @@ export async function login(email: string, password: string) {
   }
 }
 
-export async function signup(email: string, password: string, height: number, initialWeight: number) {
+export async function signup(email: string, password: string, name: string, gender: string, height: number, initialWeight: number) {
   try {
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return { success: false, error: "Email already exists" };
@@ -75,6 +75,8 @@ export async function signup(email: string, password: string, height: number, in
     const user = await prisma.user.create({
       data: {
         email,
+        name,
+        gender,
         passwordHash: hashPassword(password),
         height,
       }
@@ -1314,5 +1316,17 @@ export async function updateMarketplaceProfileLocalCopy(marketplaceProfileId: st
   } catch (error: any) {
     console.error('Update local copy error:', error);
     return { success: false, error: 'Failed to update copy: ' + error.message };
+  }
+}
+
+export async function updateProfile(name: string, gender: string) {
+  const user = await getCurrentUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+  try {
+    await prisma.user.update({ where: { id: user.id }, data: { name, gender } });
+    revalidatePath('/settings');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
   }
 }

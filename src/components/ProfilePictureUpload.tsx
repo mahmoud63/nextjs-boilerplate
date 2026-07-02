@@ -6,12 +6,16 @@ import { User, Loader2, Camera } from "lucide-react";
 
 export default function ProfilePictureUpload({ 
   currentUrl, 
-  email, 
+  email,
+  name,
+  gender,
   height, 
   weight 
 }: { 
   currentUrl: string | null;
   email: string;
+  name: string | null;
+  gender: string | null;
   height: number;
   weight: number;
 }) {
@@ -66,9 +70,9 @@ export default function ProfilePictureUpload({
       </div>
       
       <div className="text-center sm:text-left">
-        <h2 className="text-xl font-black text-foreground">{email}</h2>
+        <h2 className="text-xl font-black text-foreground">{name || email}</h2>
         <p className="text-sm text-muted-foreground font-medium mt-1">
-          Height: {height} cm • Weight: {weight ? `${weight} kg` : 'N/A'}
+          {gender ? `${gender.charAt(0).toUpperCase() + gender.slice(1)} • ` : ''}Height: {height} cm • Weight: {weight ? `${weight} kg` : 'N/A'}
         </p>
         {error && <p className="text-red-500 text-xs mt-2 font-semibold">{error}</p>}
         <p className="text-[10px] text-muted-foreground mt-2 sm:hidden">Tap image to change (Max 3MB)</p>
