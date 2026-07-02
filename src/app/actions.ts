@@ -43,7 +43,7 @@ export async function login(email: string, password: string) {
     }
 
     if (!user.isActive) {
-      return { success: false, error: "Account is inactive. Please contact administrator." };
+      return { success: false, error: "Account is inactive. Please contact the administrator at mahmoudk63@gmail.com" };
     }
 
     const token = crypto.randomBytes(32).toString('hex');
@@ -1330,3 +1330,86 @@ export async function updateProfile(name: string, gender: string) {
     return { success: false, error: error.message };
   }
 }
+
+// --- ADMIN ACTIONS ---
+const ADMIN_EMAIL = 'mahmoudk63@gmail.com';
+
+async function requireAdmin() {
+  const user = await getCurrentUser();
+  if (!user || user.email !== ADMIN_EMAIL) return null;
+  return user;
+}
+
+export async function getAdminData() {
+  const admin = await requireAdmin();
+  if (!admin) return { success: false, error: 'Unauthorized' };
+
+  const users = await prisma.user.findMany({
+    orderBy: { email: 'asc' },
+    select: { id: true, email: true, name: true, isActive: true, gender: true, height: true }
+  });
+
+  const marketplace = await prisma.marketplaceProfile.findMany({
+    orderBy: { createdAt: 'desc' },
+    select: { id: true, name: true, ownerName: true, ownerEmail: true, description: true, createdAt: true }
+  });
+
+  return { success: true, data: { users, marketplace } };
+}
+
+export async function adminToggleUserStatus(userId: string) {
+  const admin = await requireAdmin();
+  if (!admin) return { success: false, error: 'Unauthorized' };
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return { success: false, error: 'User not found' };
+  if (user.email === ADMIN_EMAIL) return { success: false, error: 'Cannot modify admin account' };
+
+  await prisma.user.update({ where: { id: userId }, data: { isActive: !user.isActive } });
+  revalidatePath('/admin');
+  return { success: true, newStatus: !user.isActive };
+}
+
+export async function adminDeleteUser(userId: string) {
+  const admin = await requireAdmin();
+  if (!admin) return { success: false, error: 'Unauthorized' };
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return { success: false, error: 'User not found' };
+  if (user.email === ADMIN_EMAIL) return { success: false, error: 'Cannot delete admin account' };
+
+  // Clean up sessions
+  await prisma.session.deleteMany({ where: { userId } });
+  // Clean up workout data
+  const sessions = await prisma.workoutSession.findMany({ where: { userId }, select: { id: true } });
+  const sessionIds = sessions.map(s => s.id);
+  if (sessionIds.length > 0) {
+    await prisma.exerciseLog.deleteMany({ where: { workoutSessionId: { in: sessionIds } } });
+    await prisma.workoutSession.deleteMany({ where: { userId } });
+  }
+  // Clean up routine data
+  await prisma.exerciseConfig.deleteMany({ where: { userId } });
+  const profiles = await prisma.routineProfile.findMany({ where: { userId }, select: { id: true } });
+  for (const p of profiles) {
+    await prisma.routineDay.deleteMany({ where: { routineProfileId: p.id } });
+  }
+  await prisma.routineProfile.deleteMany({ where: { userId } });
+  await prisma.weightLog.deleteMany({ where: { userId } });
+  // Delete marketplace profiles
+  await prisma.marketplaceProfile.deleteMany({ where: { ownerId: userId } });
+  // Delete user
+  await prisma.user.delete({ where: { id: userId } });
+
+  revalidatePath('/admin');
+  return { success: true };
+}
+
+export async function adminDeleteMarketplaceItem(itemId: string) {
+  const admin = await requireAdmin();
+  if (!admin) return { success: false, error: 'Unauthorized' };
+
+  await prisma.marketplaceProfile.delete({ where: { id: itemId } });
+  revalidatePath('/admin');
+  return { success: true };
+}
+

@@ -2,7 +2,8 @@ import ResetCycleButton from "@/components/ResetCycleButton";
 import WipeProgressButton from "@/components/WipeProgressButton";
 import { getCurrentUser, getWeightHistory } from "@/app/actions";
 import { redirect } from "next/navigation";
-import { User, LogOut, AlertTriangle } from "lucide-react";
+import { User, LogOut, AlertTriangle, Shield } from "lucide-react";
+import Link from "next/link";
 import ChangePasswordForm from "./ChangePasswordForm";
 import ProfilePictureUpload from "@/components/ProfilePictureUpload";
 import EditProfileForm from "./EditProfileForm";
@@ -49,6 +50,24 @@ export default async function SettingsPage() {
       <EditProfileForm initialName={(user as any).name as string | null} initialGender={(user as any).gender as string | null} />
 
       <ChangePasswordForm />
+
+      {user.email === 'mahmoudk63@gmail.com' && (
+        <Link
+          href="/admin"
+          className="flex items-center justify-between bg-card border border-primary/30 p-5 rounded-2xl shadow-sm hover:border-primary/60 transition-colors group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+              <Shield size={20} className="text-primary" />
+            </div>
+            <div>
+              <p className="font-bold text-foreground text-sm">Admin Panel</p>
+              <p className="text-xs text-muted-foreground">Manage users & marketplace</p>
+            </div>
+          </div>
+          <div className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-lg">Admin</div>
+        </Link>
+      )}
 
       <div className="bg-card border border-muted p-5 rounded-2xl shadow-sm space-y-4">
         <div>
