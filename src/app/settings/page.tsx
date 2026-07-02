@@ -1,7 +1,8 @@
 import ResetCycleButton from "@/components/ResetCycleButton";
+import WipeProgressButton from "@/components/WipeProgressButton";
 import { getCurrentUser, getWeightHistory } from "@/app/actions";
 import { redirect } from "next/navigation";
-import { User, LogOut } from "lucide-react";
+import { User, LogOut, AlertTriangle } from "lucide-react";
 import ChangePasswordForm from "./ChangePasswordForm";
 
 export default async function SettingsPage() {
@@ -57,6 +58,17 @@ export default async function SettingsPage() {
           </p>
           <ResetCycleButton />
         </div>
+      </div>
+
+      <div className="bg-red-500/5 border border-red-500/20 p-5 rounded-2xl shadow-sm space-y-4">
+        <div className="flex items-center gap-2 text-red-500">
+          <AlertTriangle size={20} />
+          <h3 className="font-bold">Danger Zone</h3>
+        </div>
+        <p className="text-xs text-muted-foreground mt-1 mb-4">
+          Permanently delete all your exercise logs, skipped days, and history. Your routines and account settings will remain, but all progress will be wiped clean.
+        </p>
+        <WipeProgressButton />
       </div>
     </div>
   );

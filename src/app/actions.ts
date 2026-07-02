@@ -378,35 +378,43 @@ export async function updateSessionStatus(dayName: string, status: "COMPLETED" |
   }
 }
 
-export async function resetDayProgress(dayName: string) {
+export async function wipeAllProgress() {
   try {
     const user = await getCurrentUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
-    const startOfCycle = await getCycleStartDate();
-
-    const session = await prisma.workoutSession.findFirst({
-      where: {
-        date: { gt: startOfCycle },
-        dayName,
-        userId: user.id,
-      },
+    // Find all sessions for this user
+    const sessions = await prisma.workoutSession.findMany({
+      where: { userId: user.id }
     });
 
-    if (session) {
-      await prisma.exerciseLog.deleteMany({
-        where: { workoutSessionId: session.id }
-      });
-      await prisma.workoutSession.delete({
-        where: { id: session.id }
-      });
-    }
+    const sessionIds = sessions.map(s => s.id);
+
+    // Delete all exercise logs
+    await prisma.exerciseLog.deleteMany({
+      where: { workoutSessionId: { in: sessionIds } }
+    });
+
+    // Delete all sessions
+    await prisma.workoutSession.deleteMany({
+      where: { userId: user.id }
+    });
+
+    // Reset the cycle marker
+    await prisma.workoutSession.create({
+      data: {
+        dayName: "SYSTEM_CYCLE_MARKER",
+        date: new Date(),
+        userId: user.id,
+      }
+    });
 
     revalidatePath("/");
+    revalidatePath("/history");
     return { success: true };
   } catch (error) {
-    console.error("Failed to reset day progress:", error);
-    return { success: false, error: "Failed to reset day progress" };
+    console.error("Failed to wipe all progress:", error);
+    return { success: false, error: "Failed to wipe progress" };
   }
 }
 

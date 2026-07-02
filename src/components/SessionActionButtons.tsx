@@ -1,8 +1,8 @@
 "use client";
 
 import { useTransition } from "react";
-import { updateSessionStatus, resetDayProgress } from "@/app/actions";
-import { CheckCircle2, Loader2, FastForward, RotateCcw } from "lucide-react";
+import { updateSessionStatus } from "@/app/actions";
+import { CheckCircle2, Loader2, FastForward } from "lucide-react";
 
 export default function SessionActionButtons({ dayName, currentStatus, hasAnyProgress }: { dayName: string, currentStatus?: string | null, hasAnyProgress?: boolean }) {
   const [isPending, startTransition] = useTransition();
@@ -11,14 +11,6 @@ export default function SessionActionButtons({ dayName, currentStatus, hasAnyPro
     startTransition(async () => {
       await updateSessionStatus(dayName, status);
     });
-  };
-
-  const handleReset = () => {
-    if (confirm("Are you sure you want to reset all progress for this day? This will delete all sets you've logged today.")) {
-      startTransition(async () => {
-        await resetDayProgress(dayName);
-      });
-    }
   };
 
   const isCompleted = currentStatus === "COMPLETED";
@@ -52,17 +44,6 @@ export default function SessionActionButtons({ dayName, currentStatus, hasAnyPro
         {isPending ? <Loader2 size={20} className="animate-spin" /> : <FastForward size={20} />}
         {isPending ? "Updating..." : isSkipped ? "Skipped" : "Skip Day"}
       </button>
-
-      {hasAnyProgress && (
-        <button
-          onClick={handleReset}
-          disabled={isPending}
-          className="w-full flex items-center justify-center gap-2 font-bold rounded-xl p-3 transition-all text-red-500 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 active:scale-[0.98] disabled:opacity-50 mt-2"
-        >
-          {isPending ? <Loader2 size={20} className="animate-spin" /> : <RotateCcw size={20} />}
-          Reset Day Progress
-        </button>
-      )}
     </div>
   );
 }
