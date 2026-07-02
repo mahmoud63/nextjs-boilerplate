@@ -48,7 +48,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 bg-background overflow-hidden">
       <div className="mb-8 flex flex-col items-center gap-4">
         <Image src={BEAST_LOGO_B64} alt="Beast Tracker Icon" width={64} height={64} className="rounded-2xl bg-black shadow-lg" unoptimized={true} />
         <h1 className="text-3xl font-black tracking-tighter uppercase text-primary">Beast Tracker</h1>
