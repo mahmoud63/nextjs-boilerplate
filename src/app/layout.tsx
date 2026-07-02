@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Header from "@/components/Header";
+import HeaderWrapper from "@/components/HeaderWrapper";
 import BottomNav from "@/components/BottomNav";
 import SplashScreen from "@/components/SplashScreen";
 import "./globals.css";
@@ -52,7 +53,9 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground pb-20 overscroll-none">
         <SplashScreen />
-        <Header />
+        <HeaderWrapper>
+          <Header />
+        </HeaderWrapper>
         <main className="flex-1 w-full max-w-md mx-auto relative px-4 pt-6 pb-6">
           {children}
         </main>
