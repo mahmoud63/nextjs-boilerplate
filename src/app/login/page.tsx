@@ -5,6 +5,7 @@ import { login, signup } from "@/app/actions";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
+import { BEAST_LOGO_B64 } from "@/lib/logo";
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
