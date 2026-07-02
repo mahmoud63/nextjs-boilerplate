@@ -121,6 +121,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
     }
   }
 
+  const hasAnyProgress = session !== null && session.exercises.length > 0;
   const isDayCompleted = virtualStatus === "COMPLETED" || allCompleted;
   const isDaySkipped = virtualStatus === "SKIPPED";
   const hasFinishedState = isDayCompleted || isDaySkipped;
@@ -186,7 +187,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
             <h3 className="font-semibold text-lg">Rest Day</h3>
             <p className="text-sm text-muted-foreground">Take it easy and recover for tomorrow.</p>
             
-            <SessionActionButtons dayName={activeRoutine.dayName} currentStatus={virtualStatus} />
+            <SessionActionButtons dayName={activeRoutine.dayName} currentStatus={virtualStatus} hasAnyProgress={hasAnyProgress} />
           </div>
         ) : (
           <div className="space-y-4">
@@ -228,7 +229,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
               })}
             </div>
             
-            <SessionActionButtons dayName={activeRoutine.dayName} currentStatus={virtualStatus || (allCompleted ? "COMPLETED" : null)} />
+            <SessionActionButtons dayName={activeRoutine.dayName} currentStatus={virtualStatus || (allCompleted ? "COMPLETED" : null)} hasAnyProgress={hasAnyProgress} />
           </div>
         )}
       </section>

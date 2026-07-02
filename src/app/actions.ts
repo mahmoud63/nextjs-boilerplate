@@ -378,6 +378,38 @@ export async function updateSessionStatus(dayName: string, status: "COMPLETED" |
   }
 }
 
+export async function resetDayProgress(dayName: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const startOfCycle = await getCycleStartDate();
+
+    const session = await prisma.workoutSession.findFirst({
+      where: {
+        date: { gt: startOfCycle },
+        dayName,
+        userId: user.id,
+      },
+    });
+
+    if (session) {
+      await prisma.exerciseLog.deleteMany({
+        where: { workoutSessionId: session.id }
+      });
+      await prisma.workoutSession.delete({
+        where: { id: session.id }
+      });
+    }
+
+    revalidatePath("/");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to reset day progress:", error);
+    return { success: false, error: "Failed to reset day progress" };
+  }
+}
+
 export async function resetCycle() {
   try {
     const user = await getCurrentUser();
