@@ -1,53 +1,42 @@
-import DOMPurify from "isomorphic-dompurify";
+import sanitize from "sanitize-html";
+import { escapeHtml, isHtml } from "./html";
 
-// Day descriptions are authored as rich text and travel between accounts through the
-// marketplace, so any HTML that gets stored or rendered has to be scrubbed first.
-const ALLOWED_TAGS = [
-  "p", "br", "strong", "em", "u", "s", "blockquote",
-  "h1", "h2", "h3", "h4",
-  "ul", "ol", "li",
-  "a", "code", "pre", "span", "hr",
-];
-
-const ALLOWED_ATTR = ["href", "target", "rel", "class"];
+// Day descriptions are authored as rich text and travel between accounts through
+// the marketplace, so any HTML that gets stored or rendered has to be scrubbed.
+//
+// sanitize-html parses with htmlparser2 and needs no DOM. The previous choice,
+// isomorphic-dompurify, dragged jsdom into the server bundle, and jsdom's
+// html-encoding-sniffer CommonJS-requires the now ESM-only @exodus/bytes — which
+// crashed every route on Vercel with ERR_REQUIRE_ESM.
+const OPTIONS: sanitize.IOptions = {
+  allowedTags: [
+    "p", "br", "strong", "em", "u", "s", "blockquote",
+    "h1", "h2", "h3", "h4",
+    "ul", "ol", "li",
+    "a", "code", "pre", "span", "hr",
+  ],
+  allowedAttributes: {
+    a: ["href", "target", "rel"],
+    "*": ["class"],
+  },
+  allowedSchemes: ["http", "https", "mailto"],
+  allowedSchemesAppliedToAttributes: ["href"],
+  disallowedTagsMode: "discard",
+  transformTags: {
+    // Author-supplied links open elsewhere; never hand them the opener window.
+    a: sanitize.simpleTransform("a", { rel: "noopener noreferrer", target: "_blank" }),
+  },
+};
 
 export function sanitizeHtml(dirty: string): string {
-  return DOMPurify.sanitize(dirty ?? "", {
-    ALLOWED_TAGS,
-    ALLOWED_ATTR,
-    ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|#)/i,
-    FORBID_ATTR: ["style", "srcset"],
-  });
-}
-
-/** True when the string carries markup rather than being legacy plain text. */
-export function isHtml(value: string): boolean {
-  return /<\/?[a-z][\s\S]*>/i.test(value ?? "");
+  return sanitize(dirty ?? "", OPTIONS);
 }
 
 /** Legacy descriptions were plain text; wrap them so rendering is uniform. */
 export function toHtml(value: string): string {
   if (!value) return "";
   if (isHtml(value)) return sanitizeHtml(value);
-  const escaped = value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-  return `<p>${escaped.replace(/\n/g, "<br />")}</p>`;
+  return `<p>${escapeHtml(value).replace(/\n/g, "<br />")}</p>`;
 }
 
-/** Plain-text version, for previews and line-clamped summaries. */
-export function toPlainText(value: string): string {
-  if (!value) return "";
-  if (!isHtml(value)) return value;
-  return sanitizeHtml(value)
-    .replace(/<li>/gi, " • ")
-    .replace(/<\/(p|h[1-4]|li|blockquote)>/gi, " ")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/\s+/g, " ")
-    .trim();
-}
+export { isHtml, toPlainText } from "./html";

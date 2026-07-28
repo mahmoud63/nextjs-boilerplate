@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { getMarketplaceProfiles, copyMarketplaceProfile, updateMarketplaceProfileLocalCopy } from "@/app/actions";
 import { Download, Loader2, UserCircle, X, Activity, CheckCircle, RefreshCw } from "lucide-react";
 import AlertModal, { AlertType } from "@/components/ui/AlertModal";
-import { toPlainText } from "@/lib/sanitize";
+import { toPlainText } from "@/lib/html";
 
 export default function MarketplaceManager({ initialProfiles, userRoutines }: { initialProfiles: any[], userRoutines: any[] }) {
   const [activeTab, setActiveTab] = useState<"discover" | "added">("discover");
