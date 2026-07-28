@@ -31,7 +31,7 @@ export default function SplashScreen() {
           className="rounded-3xl bg-black shadow-2xl drop-shadow-2xl" 
           unoptimized={true} 
         />
-        <h1 className="text-4xl font-black tracking-tighter uppercase text-primary">
+        <h1 className="text-4xl font-black tracking-tighter uppercase text-accent">
           Beast Tracker
         </h1>
       </div>

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { getMarketplaceProfiles, copyMarketplaceProfile, updateMarketplaceProfileLocalCopy } from "@/app/actions";
 import { Download, Loader2, UserCircle, X, Activity, CheckCircle, RefreshCw } from "lucide-react";
 import AlertModal, { AlertType } from "@/components/ui/AlertModal";
+import { toPlainText } from "@/lib/sanitize";
 
 export default function MarketplaceManager({ initialProfiles, userRoutines }: { initialProfiles: any[], userRoutines: any[] }) {
   const [activeTab, setActiveTab] = useState<"discover" | "added">("discover");
@@ -195,7 +196,10 @@ export default function MarketplaceManager({ initialProfiles, userRoutines }: { 
                         <h4 className="font-bold text-foreground">Day {day.dayNumber}: {day.dayName}</h4>
                         {day.isRestDay && <span className="bg-secondary/20 text-secondary text-xs px-2 py-1 rounded-md font-bold">Rest Day</span>}
                       </div>
-                      {day.description && <p className="text-xs text-muted-foreground mb-3">{day.description}</p>}
+                      {day.description && (
+                        // Preview only — flatten another author's rich text rather than rendering their markup.
+                        <p className="text-xs text-muted-foreground mb-3 line-clamp-3">{toPlainText(day.description)}</p>
+                      )}
                       
                       {!day.isRestDay && day.exercises && day.exercises.length > 0 && (
                         <div className="space-y-2 mt-3">

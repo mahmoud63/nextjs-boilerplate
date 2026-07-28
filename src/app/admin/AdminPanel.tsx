@@ -85,7 +85,7 @@ export default function AdminPanel({
           <Shield size={20} className="text-red-500" />
         </div>
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-foreground uppercase">Admin Panel</h1>
+          <h1 className="text-2xl font-black tracking-tight text-accent uppercase">Admin Panel</h1>
           <p className="text-xs text-muted-foreground">Restricted access • mahmoudk63@gmail.com</p>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { cookies } from "next/headers";
+import { Anton, Archivo_Narrow, Geist_Mono } from "next/font/google";
 import Header from "@/components/Header";
 import HeaderWrapper from "@/components/HeaderWrapper";
 import BottomNav from "@/components/BottomNav";
@@ -7,9 +8,18 @@ import SplashScreen from "@/components/SplashScreen";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// "Kinetic Intensity": Anton for headlines, Archivo Narrow for body and data.
+const anton = Anton({
+  variable: "--font-anton",
+  weight: "400",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const archivoNarrow = Archivo_Narrow({
+  variable: "--font-archivo-narrow",
+  subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -42,27 +52,41 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Logged-out visitors only ever reach the landing page or login, and neither
+  // wants the app chrome or the narrow phone-width column.
+  const isSignedIn = (await cookies()).has("session_token");
+
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${anton.variable} ${archivoNarrow.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground pb-20 overscroll-none">
+      <body
+        className={`min-h-full flex flex-col bg-background text-foreground overscroll-none ${
+          isSignedIn ? "pb-20" : ""
+        }`}
+      >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <SplashScreen />
-          <HeaderWrapper>
-            <Header />
-          </HeaderWrapper>
-          <main className="flex-1 w-full max-w-md mx-auto relative px-4 pt-6 pb-6">
-            {children}
-          </main>
-          <BottomNav />
+          {isSignedIn ? (
+            <>
+              <SplashScreen />
+              <HeaderWrapper>
+                <Header />
+              </HeaderWrapper>
+              <main className="flex-1 w-full max-w-md mx-auto relative px-4 pt-6 pb-6">
+                {children}
+              </main>
+              <BottomNav />
+            </>
+          ) : (
+            <main className="flex-1 w-full">{children}</main>
+          )}
         </ThemeProvider>
       </body>
     </html>

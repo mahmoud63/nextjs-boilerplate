@@ -13,7 +13,7 @@ export default async function MarketplacePage() {
     <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <header className="flex items-center justify-between pb-2">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-primary">Marketplace</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-accent">Marketplace</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             Discover and copy routines from the community
           </p>

@@ -5,6 +5,7 @@ import { ChevronRight, CalendarDays, Flame, CheckCircle2, FastForward } from "lu
 import DaySelector from "@/components/DaySelector";
 import SessionActionButtons from "@/components/SessionActionButtons";
 import ResetCycleButton from "@/components/ResetCycleButton";
+import RichText from "@/components/RichText";
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ day?: string }> }) {
   const { day } = await searchParams;
@@ -132,7 +133,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
     <div className="flex flex-col space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <header className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-primary">Workout</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-accent">Workout</h1>
           <p className="text-muted-foreground flex items-center gap-1 mt-1">
             <CalendarDays size={14} /> Select your training day
           </p>
@@ -155,9 +156,18 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
         )}
         
         <h2 className="text-xl font-bold mb-2">{activeRoutine.dayName}</h2>
-        <p className="text-sm leading-relaxed text-muted-foreground mb-6">
-          {activeRoutine.description}
-        </p>
+        {activeRoutine.description && (
+          <details className="group mb-6 rounded-xl border border-muted bg-background/40">
+            <summary className="cursor-pointer list-none px-4 py-2.5 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors">
+              Session Brief
+              <ChevronRight size={16} className="transition-transform group-open:rotate-90" />
+            </summary>
+            <RichText
+              html={activeRoutine.description}
+              className="px-4 pb-4 text-sm leading-relaxed text-muted-foreground"
+            />
+          </details>
+        )}
 
         {isDayCompleted && (
           <div className="mb-6 bg-green-500/10 border border-green-500/20 text-green-500 p-3 rounded-xl flex items-center gap-3">
@@ -221,6 +231,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
                           {exercise.name}
                         </h4>
                         <p className="text-xs text-muted-foreground mt-0.5">{exercise.sets} sets × {exercise.reps} • {exercise.targetMuscle}</p>
+                        {(exercise.targetWeight || exercise.rpe) && (
+                          <p className="text-xs text-muted-foreground/70 mt-0.5">
+                            {[exercise.targetWeight, exercise.rpe && `RPE ${exercise.rpe}`].filter(Boolean).join(" • ")}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <ChevronRight size={18} className="text-muted-foreground group-hover:text-primary transition-colors group-hover:translate-x-1 shrink-0 ml-2" />

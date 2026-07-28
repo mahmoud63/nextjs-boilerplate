@@ -62,7 +62,6 @@ export default function LoginPage() {
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-primary/20 blur-[120px] animate-pulse" />
         <div className="absolute bottom-0 right-0 w-[300px] h-[300px] rounded-full bg-primary/10 blur-[100px]" />
-        <div className="absolute bottom-20 left-0 w-[200px] h-[200px] rounded-full bg-violet-500/10 blur-[80px]" />
       </div>
 
       <div className="relative w-full max-w-sm px-4 flex flex-col items-center gap-8">
@@ -70,18 +69,17 @@ export default function LoginPage() {
         {/* Logo & Brand */}
         <div className="flex flex-col items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-700">
           <div className="relative">
-            <div className="absolute inset-0 rounded-3xl bg-primary/40 blur-xl scale-110" />
             <Image
               src={BEAST_LOGO_B64}
               alt="Beast Tracker"
               width={72}
               height={72}
-              className="relative rounded-3xl bg-black shadow-2xl border border-primary/30"
+              className="relative rounded-3xl bg-black border border-muted"
               unoptimized={true}
             />
           </div>
           <div className="text-center">
-            <h1 className="text-4xl font-black tracking-tighter uppercase text-foreground">
+            <h1 className="text-4xl font-black tracking-tighter uppercase text-accent">
               Beast <span className="text-primary">Tracker</span>
             </h1>
             <p className="text-sm text-muted-foreground mt-1 font-medium">
@@ -91,7 +89,7 @@ export default function LoginPage() {
         </div>
 
         {/* Card */}
-        <div className="w-full bg-card/70 backdrop-blur-xl border border-muted/60 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
+        <div className="w-full bg-card/70 backdrop-blur-xl border border-muted/60 rounded-3xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
 
           {/* Tab switcher */}
           <div className="flex bg-muted/40 m-3 rounded-2xl p-1">
@@ -100,7 +98,7 @@ export default function LoginPage() {
               onClick={() => { setIsLogin(true); setError(""); setSuccessMsg(""); }}
               className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
                 isLogin
-                  ? "bg-card text-foreground shadow-md"
+                  ? "bg-card text-foreground border border-muted"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -111,7 +109,7 @@ export default function LoginPage() {
               onClick={() => { setIsLogin(false); setError(""); setSuccessMsg(""); }}
               className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
                 !isLogin
-                  ? "bg-card text-foreground shadow-md"
+                  ? "bg-card text-foreground border border-muted"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -247,7 +245,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isPending}
-                className="w-full relative overflow-hidden bg-primary text-primary-foreground py-3.5 rounded-xl font-black text-sm uppercase tracking-widest transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-primary/30 mt-2"
+                className="w-full relative overflow-hidden bg-primary text-primary-foreground py-3.5 rounded-xl font-black text-sm uppercase tracking-widest transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50 mt-2"
               >
                 {isPending ? (
                   <Loader2 className="animate-spin w-5 h-5 mx-auto" />

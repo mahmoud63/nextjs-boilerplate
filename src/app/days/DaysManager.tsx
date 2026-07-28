@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
-import { updateRoutineDay, createRoutineProfile, activateRoutineProfile, updateRoutineProfile, deleteRoutineProfile, publishToMarketplace, addRoutineDay, deleteRoutineDay } from "@/app/actions";
+import { updateRoutineDay, createRoutineProfile, activateRoutineProfile, updateRoutineProfile, deleteRoutineProfile, publishToMarketplace, addRoutineDay, deleteRoutineDay, moveRoutineDay } from "@/app/actions";
 import { Loader2, Plus, Trash2, ArrowUp, ArrowDown, CheckCircle, Edit2, Globe, X, RefreshCw } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import AlertModal, { AlertType } from "@/components/ui/AlertModal";
+import RichTextEditor from "@/components/RichTextEditor";
 
 type Day = any;
 type Exercise = any;
@@ -41,15 +42,21 @@ export default function DaysManager({
     isOpen: false, title: "", message: "", type: "info"
   });
 
-  // When initialDays changes (e.g. via navigation), reset the selected day
+  // When initialDays changes (navigation, save, reorder), re-sync the form from the
+  // server data but stay on the day the user was editing — reordering re-renders this
+  // list, and snapping back to Day 1 every time makes the arrows unusable.
   useEffect(() => {
-    if (initialDays.length > 0) {
-      setSelectedDayId(initialDays[0].id);
-      setDayForm(initialDays[0]);
-    } else {
+    if (initialDays.length === 0) {
       setSelectedDayId("");
       setDayForm(null);
+      return;
     }
+    const stillPresent = initialDays.find(d => d.id === selectedDayId);
+    const next = stillPresent || initialDays[0];
+    setSelectedDayId(next.id);
+    setDayForm(next);
+    // selectedDayId is read to preserve it, not to re-run this effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialDays]);
 
   const currentProfile = profiles.find(p => p.id === currentProfileId) || profiles[0];
@@ -148,6 +155,18 @@ export default function DaysManager({
         isRestDay: dayForm.isRestDay,
         exerciseIds: dayForm.exerciseIds,
       });
+    });
+  };
+
+  const dayIndex = initialDays.findIndex((d: Day) => d.id === selectedDayId);
+
+  const handleMoveDay = (direction: "up" | "down") => {
+    if (!dayForm) return;
+    startTransition(async () => {
+      const res = await moveRoutineDay(dayForm.id, direction);
+      if (!res.success) {
+        setAlertConfig({ isOpen: true, title: "Cannot Move Day", message: res.error || "Failed to move day.", type: "error" });
+      }
     });
   };
 
@@ -329,6 +348,28 @@ export default function DaysManager({
               ))}
             </select>
 
+            {/* Reorder days */}
+            {initialDays.length > 1 && (
+              <div className="flex gap-1 shrink-0">
+                <button
+                  onClick={() => handleMoveDay("up")}
+                  disabled={isPending || dayIndex <= 0}
+                  title="Move day earlier"
+                  className="bg-card text-muted-foreground p-3 rounded-xl border border-muted hover:text-foreground hover:bg-muted/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ArrowUp size={20} />
+                </button>
+                <button
+                  onClick={() => handleMoveDay("down")}
+                  disabled={isPending || dayIndex === -1 || dayIndex >= initialDays.length - 1}
+                  title="Move day later"
+                  className="bg-card text-muted-foreground p-3 rounded-xl border border-muted hover:text-foreground hover:bg-muted/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ArrowDown size={20} />
+                </button>
+              </div>
+            )}
+
             {/* Add Day icon button */}
             {initialDays.length < 30 && (
               <button
@@ -366,10 +407,11 @@ export default function DaysManager({
             </div>
             <div>
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Description</label>
-              <textarea 
-                value={dayForm.description} 
-                onChange={e => setDayForm({...dayForm, description: e.target.value})}
-                className="w-full bg-background border border-muted rounded-lg p-2 text-sm h-20"
+              <RichTextEditor
+                key={dayForm.id}
+                value={dayForm.description}
+                onChange={html => setDayForm((f: any) => ({ ...f, description: html }))}
+                placeholder="Warm-up, block targets, cool-down…"
               />
             </div>
             <div className="flex items-center gap-3">

@@ -6,6 +6,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Loader2, Plus, TrendingDown, TrendingUp, Scale, Calendar, ChevronDown, ChevronUp, CheckCircle2, XCircle, Search, Filter, X } from "lucide-react";
 
 import ExerciseChart from "./ExerciseChart";
+import { describeSetLoose, type SetLog } from "@/lib/exerciseTypes";
 
 type WeightLog = {
   id: string;
@@ -21,7 +22,7 @@ type WorkoutHistory = {
   exercises: {
     id: string;
     exerciseName: string;
-    sets: { setNumber: number; weight: number; reps: number }[];
+    sets: SetLog[];
   }[];
 };
 
@@ -134,7 +135,7 @@ export default function HistoryManager({
     <div className="space-y-6 pb-20">
       <header className="flex items-center justify-between pb-2">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-primary">History</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-accent">History</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             Track your weight and progress
           </p>
@@ -225,17 +226,17 @@ export default function HistoryManager({
                   tickLine={false} 
                 />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px' }}
-                  itemStyle={{ color: 'hsl(var(--foreground))', fontWeight: 'bold' }}
-                  labelStyle={{ color: 'hsl(var(--muted-foreground))', marginBottom: '4px' }}
+                  contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--muted)', borderRadius: '12px' }}
+                  itemStyle={{ color: 'var(--primary)', fontWeight: 'bold' }}
+                  labelStyle={{ color: 'var(--muted-foreground)', marginBottom: '4px' }}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="weight" 
-                  stroke="#ffffff" 
+                <Line
+                  type="monotone"
+                  dataKey="weight"
+                  stroke="var(--primary)"
                   strokeWidth={3}
-                  dot={{ fill: '#ffffff', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, fill: '#000000' }}
+                  dot={{ fill: 'var(--primary)', strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, fill: 'var(--foreground)' }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -414,7 +415,7 @@ export default function HistoryManager({
                             <div className="flex flex-wrap gap-2">
                               {ex.sets.map((s, i) => (
                                 <div key={i} className="bg-background border border-muted px-2 py-1 rounded text-xs font-semibold text-muted-foreground">
-                                  Set {s.setNumber}: {s.weight}kg × {s.reps}
+                                  Set {s.setNumber}: {describeSetLoose(s)}
                                 </div>
                               ))}
                             </div>

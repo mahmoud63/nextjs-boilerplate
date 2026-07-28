@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import { cookies } from "next/headers";
 import { put, del, copy } from "@vercel/blob";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 // --- AUTHENTICATION ACTIONS ---
 
@@ -186,6 +187,8 @@ export async function logSet(data: {
   setNumber: number;
   weight: number;
   reps: number;
+  duration?: number;
+  distance?: number;
 }) {
   try {
     const user = await getCurrentUser();
@@ -235,6 +238,8 @@ export async function logSet(data: {
             setNumber: data.setNumber,
             weight: data.weight,
             reps: data.reps,
+            duration: data.duration ?? null,
+            distance: data.distance ?? null,
           },
         },
       },
@@ -686,7 +691,9 @@ export async function updateRoutineDay(id: string, data: { dayName: string, desc
       where: { id, userId: user.id },
       data: {
         dayName: data.dayName,
-        description: data.description,
+        // Rich text from the client is untrusted and gets copied into other
+        // accounts through the marketplace, so it is scrubbed before storage.
+        description: sanitizeHtml(data.description),
         isRestDay: data.isRestDay,
         exerciseIds: data.exerciseIds,
       }
@@ -778,6 +785,45 @@ export async function deleteRoutineDay(dayId: string) {
   }
 }
 
+export async function moveRoutineDay(dayId: string, direction: "up" | "down") {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const day = await prisma.routineDay.findFirst({
+      where: { id: dayId, userId: user.id }
+    });
+    if (!day) return { success: false, error: "Day not found" };
+
+    const siblings = await prisma.routineDay.findMany({
+      where: { userId: user.id, routineProfileId: day.routineProfileId },
+      orderBy: { dayNumber: 'asc' }
+    });
+
+    const index = siblings.findIndex(d => d.id === dayId);
+    const swapIndex = direction === "up" ? index - 1 : index + 1;
+    if (index === -1 || swapIndex < 0 || swapIndex >= siblings.length) {
+      return { success: false, error: "Cannot move further" };
+    }
+
+    // Sessions key on dayName, not dayNumber, so swapping positions leaves
+    // logged history intact.
+    const neighbour = siblings[swapIndex];
+    await prisma.$transaction([
+      prisma.routineDay.update({ where: { id: day.id }, data: { dayNumber: neighbour.dayNumber } }),
+      prisma.routineDay.update({ where: { id: neighbour.id }, data: { dayNumber: day.dayNumber } }),
+    ]);
+
+    revalidatePath("/");
+    revalidatePath("/studio");
+    revalidatePath("/routines");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to move routine day:", error);
+    return { success: false, error: "Failed to move routine day" };
+  }
+}
+
 export async function getAllExercises() {
   try {
     const user = await getCurrentUser();
@@ -794,7 +840,22 @@ export async function getAllExercises() {
   }
 }
 
-export async function createExercise(data: { name: string, sets: number, reps: string, targetMuscle: string, rest: string, notes?: string, imageUrl?: string }) {
+export type ExerciseInput = {
+  name: string,
+  type?: string,
+  sets: number,
+  reps: string,
+  targetMuscle: string,
+  rest: string,
+  rpe?: string,
+  targetWeight?: string,
+  videoUrl?: string,
+  refLinks?: { label: string, url: string }[],
+  notes?: string,
+  imageUrl?: string
+};
+
+export async function createExercise(data: ExerciseInput) {
   try {
     const user = await getCurrentUser();
     if (!user) return { success: false, error: "Unauthorized" };
@@ -808,7 +869,7 @@ export async function createExercise(data: { name: string, sets: number, reps: s
   }
 }
 
-export async function updateExercise(id: string, data: { name: string, sets: number, reps: string, targetMuscle: string, rest: string, notes?: string, imageUrl?: string }) {
+export async function updateExercise(id: string, data: ExerciseInput) {
   try {
     const user = await getCurrentUser();
     if (!user) return { success: false, error: "Unauthorized" };
@@ -816,6 +877,10 @@ export async function updateExercise(id: string, data: { name: string, sets: num
     const exercise = await prisma.exerciseConfig.findUnique({ where: { id, userId: user.id } });
     if (exercise?.imageUrl && data.imageUrl !== undefined && exercise.imageUrl !== data.imageUrl && exercise.imageUrl.includes('vercel-storage.com')) {
       try { await del(exercise.imageUrl); } catch (e) { console.error("Failed to delete old exercise image:", e); }
+    }
+    // Uploaded demo clips are blobs too — drop the old one when it's replaced or cleared.
+    if (exercise?.videoUrl && data.videoUrl !== undefined && exercise.videoUrl !== data.videoUrl && exercise.videoUrl.includes('vercel-storage.com')) {
+      try { await del(exercise.videoUrl); } catch (e) { console.error("Failed to delete old exercise video:", e); }
     }
 
     await prisma.exerciseConfig.update({ where: { id, userId: user.id }, data });
@@ -839,6 +904,9 @@ export async function deleteExercise(id: string) {
     const exercise = await prisma.exerciseConfig.findUnique({ where: { id, userId: user.id } });
     if (exercise?.imageUrl && exercise.imageUrl.includes('vercel-storage.com')) {
       try { await del(exercise.imageUrl); } catch (e) { console.error("Failed to delete exercise image:", e); }
+    }
+    if (exercise?.videoUrl && exercise.videoUrl.includes('vercel-storage.com')) {
+      try { await del(exercise.videoUrl); } catch (e) { console.error("Failed to delete exercise video:", e); }
     }
     if (exercise && exercise.routineDayIds.length > 0) {
       // Find days that have this exercise and remove it
@@ -1165,10 +1233,15 @@ export async function copyMarketplaceProfile(marketplaceProfileId: string) {
               data: {
                 userId: user.id,
                 name: ex.name,
+                type: ex.type ?? "WEIGHTS",
                 sets: ex.sets,
                 reps: ex.reps,
                 targetMuscle: ex.targetMuscle,
                 rest: ex.rest,
+                rpe: ex.rpe,
+                targetWeight: ex.targetWeight,
+                videoUrl: ex.videoUrl,
+                refLinks: ex.refLinks ?? [],
                 notes: ex.notes,
                 imageUrl: copiedImageUrl
               }
@@ -1183,7 +1256,7 @@ export async function copyMarketplaceProfile(marketplaceProfileId: string) {
             routineProfileId: newProfile.id,
             dayNumber: day.dayNumber,
             dayName: day.dayName,
-            description: day.description,
+            description: sanitizeHtml(day.description ?? ""),
             isRestDay: day.isRestDay,
             exerciseIds: createdExerciseIds
           }
@@ -1278,10 +1351,15 @@ export async function updateMarketplaceProfileLocalCopy(marketplaceProfileId: st
               data: {
                 userId: user.id,
                 name: ex.name,
+                type: ex.type ?? "WEIGHTS",
                 sets: ex.sets,
                 reps: ex.reps,
                 targetMuscle: ex.targetMuscle,
                 rest: ex.rest,
+                rpe: ex.rpe,
+                targetWeight: ex.targetWeight,
+                videoUrl: ex.videoUrl,
+                refLinks: ex.refLinks ?? [],
                 notes: ex.notes,
                 imageUrl: copiedImageUrl
               }
@@ -1295,7 +1373,7 @@ export async function updateMarketplaceProfileLocalCopy(marketplaceProfileId: st
             routineProfileId: localProfile.id,
             dayNumber: day.dayNumber,
             dayName: day.dayName,
-            description: day.description,
+            description: sanitizeHtml(day.description ?? ""),
             isRestDay: day.isRestDay,
             exerciseIds: createdExerciseIds
           }

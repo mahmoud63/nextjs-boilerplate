@@ -1,9 +1,11 @@
 import { getExerciseHistory, getCycleStartDate, getExerciseConfig, getAllRoutineDays } from "@/app/actions";
 import Link from "next/link";
-import { ChevronLeft, Info, History, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, Info, History, CheckCircle2, Link as LinkIcon, ExternalLink } from "lucide-react";
 import SetLogger from "./SetLogger";
 import HistoryChart from "./HistoryChart";
 import HistoryList from "./HistoryList";
+import ExerciseMedia from "@/components/ExerciseMedia";
+import { normalizeType, TYPE_LABELS } from "@/lib/exerciseTypes";
 
 export default async function ExercisePage({ 
   params,
@@ -38,6 +40,8 @@ export default async function ExercisePage({
   if (!activeDayName) {
     activeDayName = "Unknown Day";
   }
+
+  const exerciseType = normalizeType(exercise.type);
 
   const historyRes = await getExerciseHistory(exercise.name);
   const history = historyRes.success && historyRes.data ? historyRes.data : [];
@@ -85,23 +89,48 @@ export default async function ExercisePage({
           <Info size={24} />
         </div>
         <div className="text-sm w-full">
-          <p className="font-semibold mb-1 text-foreground">{exercise.targetMuscle}</p>
-          <p className="text-muted-foreground">Target: {exercise.sets} sets × {exercise.reps}</p>
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <p className="font-semibold text-foreground">{exercise.targetMuscle}</p>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted/50 px-2 py-1 rounded-md shrink-0">
+              {TYPE_LABELS[exerciseType]}
+            </span>
+          </div>
+          <p className="text-muted-foreground">Target: {exercise.sets} {exerciseType === "CARDIO" ? "rounds" : "sets"} × {exercise.reps}</p>
           <p className="text-muted-foreground">Rest: {exercise.rest}</p>
+          {exercise.targetWeight && <p className="text-muted-foreground">Weight: {exercise.targetWeight}</p>}
+          {exercise.rpe && <p className="text-muted-foreground">Target RPE: {exercise.rpe}</p>}
           {exercise.notes && <p className="text-primary/80 mt-2 text-xs italic">{exercise.notes}</p>}
-          
-          {exercise.imageUrl && (
-            <div className="mt-4 rounded-xl overflow-hidden border border-muted">
-              <img src={`/api/blob?url=${encodeURIComponent(exercise.imageUrl)}`} alt={exercise.name} className="w-full h-auto object-cover max-h-48" />
+
+          <ExerciseMedia videoUrl={exercise.videoUrl} imageUrl={exercise.imageUrl} name={exercise.name} />
+
+          {exercise.refLinks && exercise.refLinks.length > 0 && (
+            <div className="mt-4 space-y-2">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <LinkIcon size={12} /> References
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {exercise.refLinks.map((ref, idx) => (
+                  <a
+                    key={idx}
+                    href={ref.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/10 border border-primary/20 rounded-lg px-2.5 py-1.5 hover:bg-primary/20 transition-colors"
+                  >
+                    {ref.label} <ExternalLink size={11} />
+                  </a>
+                ))}
+              </div>
             </div>
           )}
         </div>
       </section>
 
       <section>
-        <SetLogger 
-          exerciseId={exercise.id} 
-          exerciseName={exercise.name} 
+        <SetLogger
+          exerciseId={exercise.id}
+          exerciseName={exercise.name}
+          exerciseType={exercise.type}
           dayName={activeDayName}
           nextSetNumber={cycleSetsCount + 1}
           targetSets={exercise.sets}
@@ -114,8 +143,8 @@ export default async function ExercisePage({
           <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
             <History size={18} className="text-primary" /> Past Performance
           </h2>
-          <HistoryChart history={history} />
-          <HistoryList history={history} />
+          <HistoryChart history={history} type={exerciseType} />
+          <HistoryList history={history} type={exerciseType} />
         </section>
       )}
     </div>

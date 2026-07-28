@@ -1,18 +1,38 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+const PUBLIC_PATHS = ['/login', '/welcome']
+
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('session_token')
-  const isLoginPage = request.nextUrl.pathname.startsWith('/login')
-  
-  if (!token && !isLoginPage) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  const { pathname } = request.nextUrl
+
+  // Files in /public (PWA icons, screenshots) must stay reachable while logged out,
+  // otherwise install prompts and the landing page lose their assets.
+  const isStaticAsset = /\.[a-z0-9]+$/i.test(pathname)
+  if (isStaticAsset) return NextResponse.next()
+
+  const isPublicPath = PUBLIC_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  )
+
+  if (!token) {
+    // Logged-out visitors meet the landing page at the root URL rather than a
+    // login wall. Rewrite, not redirect, so the marketing page lives at "/".
+    if (pathname === '/') {
+      return NextResponse.rewrite(new URL('/welcome', request.url))
+    }
+    if (!isPublicPath) {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+    return NextResponse.next()
   }
-  
-  if (token && isLoginPage) {
+
+  // Signed in: the landing page and login screen have nothing left to offer.
+  if (isPublicPath) {
     return NextResponse.redirect(new URL('/', request.url))
   }
-  
+
   return NextResponse.next()
 }
 

@@ -20,7 +20,7 @@ export default async function Header() {
             className="rounded-full bg-black shadow-sm"
             unoptimized={true}
           />
-          <span className="font-bold tracking-tight text-xl text-foreground uppercase">
+          <span className="font-bold tracking-tight text-xl text-accent uppercase">
             BT
           </span>
         </Link>

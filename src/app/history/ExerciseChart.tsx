@@ -71,18 +71,19 @@ export default function ExerciseChart({ exerciseName }: { exerciseName: string }
             tickLine={false} 
           />
           <Tooltip 
-            contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px' }}
-            itemStyle={{ color: 'hsl(var(--foreground))', fontWeight: 'bold' }}
-            labelStyle={{ color: 'hsl(var(--muted-foreground))', marginBottom: '4px' }}
+            // The theme tokens are hex, not HSL triplets — hsl(var(--card)) never resolved.
+            contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--muted)', borderRadius: '12px' }}
+            itemStyle={{ color: 'var(--primary)', fontWeight: 'bold' }}
+            labelStyle={{ color: 'var(--muted-foreground)', marginBottom: '4px' }}
             formatter={(value: any) => [`${value} kg`, "Max Weight"]}
           />
-          <Line 
-            type="monotone" 
-            dataKey="maxWeight" 
-            stroke="#ffffff" 
+          <Line
+            type="monotone"
+            dataKey="maxWeight"
+            stroke="var(--primary)"
             strokeWidth={3}
-            dot={{ fill: '#ffffff', strokeWidth: 2, r: 4 }}
-            activeDot={{ r: 6, fill: '#000000' }}
+            dot={{ fill: 'var(--primary)', strokeWidth: 2, r: 4 }}
+            activeDot={{ r: 6, fill: 'var(--foreground)' }}
           />
         </LineChart>
       </ResponsiveContainer>

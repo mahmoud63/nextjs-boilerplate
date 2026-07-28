@@ -54,6 +54,13 @@ type SetLog {
   setNumber Int
   weight    Float
   reps      Int
+  duration  Int?   // seconds — TIMED holds and CARDIO
+  distance  Float? // km — CARDIO only
+}
+
+type RefLink {
+  label String
+  url   String
 }
 
 model ExerciseLog {
@@ -101,10 +108,15 @@ model ExerciseConfig {
   userId        String?  @db.ObjectId
   user          User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   name          String
+  type          String   @default("WEIGHTS") // WEIGHTS | BODYWEIGHT | TIMED | CARDIO
   sets          Int
   reps          String
   targetMuscle  String
   rest          String
+  rpe           String?
+  targetWeight  String?
+  videoUrl      String?
+  refLinks      RefLink[]
   notes         String?
   imageUrl      String?
   

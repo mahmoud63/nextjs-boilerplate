@@ -9,7 +9,15 @@ export default function SessionActionButtons({ dayName, currentStatus, hasAnyPro
 
   const handleStatusUpdate = (status: "COMPLETED" | "SKIPPED") => {
     startTransition(async () => {
-      await updateSessionStatus(dayName, status);
+      const res = await updateSessionStatus(dayName, status);
+
+      // The dashboard picks the next unfinished day only when no ?day= is pinned in
+      // the URL. Reopening the app restores the last URL, so a finished day would
+      // stay in focus forever. Drop the param (without navigating away, so the
+      // completed state stays visible) and the next open lands on the next day.
+      if (res?.success && typeof window !== "undefined" && window.location.search) {
+        window.history.replaceState(null, "", window.location.pathname);
+      }
     });
   };
 

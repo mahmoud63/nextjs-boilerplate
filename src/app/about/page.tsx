@@ -9,7 +9,7 @@ export default function AboutPage() {
           <ArrowLeft size={24} className="text-foreground" />
         </Link>
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-primary uppercase">About Beast Tracker</h1>
+          <h1 className="text-3xl font-black tracking-tight text-accent uppercase">About Beast Tracker</h1>
         </div>
       </header>
 
