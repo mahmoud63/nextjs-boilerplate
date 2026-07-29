@@ -131,6 +131,7 @@ export default async function ExercisePage({
           exerciseId={exercise.id}
           exerciseName={exercise.name}
           exerciseType={exercise.type}
+          restLabel={exercise.rest}
           dayName={activeDayName}
           nextSetNumber={cycleSetsCount + 1}
           targetSets={exercise.sets}

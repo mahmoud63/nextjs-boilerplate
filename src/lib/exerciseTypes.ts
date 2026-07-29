@@ -47,6 +47,41 @@ export function chartMetric(type: ExerciseType): {
   }
 }
 
+/**
+ * Turn a free-text rest field ("90 sec", "2-3 mins", "N/A") into seconds.
+ *
+ * Ranges take the lower bound — the timer is a floor to rest at least, and the
+ * +30s button covers the rest. Returns null when there is nothing to count.
+ */
+export function parseRestSeconds(rest?: string | null): number | null {
+  if (!rest) return null;
+  const text = rest.toLowerCase();
+  if (text.includes("n/a") || text.includes("none")) return null;
+
+  const match = text.match(/(\d+(?:\.\d+)?)/);
+  if (!match) return null;
+
+  const amount = parseFloat(match[1]);
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+
+  // Look for the unit that follows the number, not just anywhere in the string,
+  // so "60-90 sec walk" reads as seconds rather than tripping on another token.
+  const after = text.slice(match.index! + match[1].length);
+  const isMinutes = /^\s*-?\s*\d*\s*(m\b|min)/.test(after) || /\bmin/.test(after);
+
+  const seconds = Math.round(isMinutes ? amount * 60 : amount);
+  // Guard against a nonsense value locking the user into a long countdown.
+  return seconds > 0 && seconds <= 3600 ? seconds : null;
+}
+
+/** Compact mm:ss for countdowns. */
+export function formatClock(totalSeconds: number): string {
+  const safe = Math.max(0, totalSeconds);
+  const m = String(Math.floor(safe / 60)).padStart(2, "0");
+  const s = String(safe % 60).padStart(2, "0");
+  return `${m}:${s}`;
+}
+
 export function formatDuration(seconds?: number | null): string {
   if (!seconds && seconds !== 0) return "—";
   if (seconds < 60) return `${seconds} sec`;

@@ -2,15 +2,17 @@
 
 import { useState, useTransition } from "react";
 import { logSet } from "@/app/actions";
-import { Plus, Check, Loader2, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Plus, Check, Loader2, ArrowRight, CheckCircle2, Timer } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { normalizeType, TYPE_LABELS } from "@/lib/exerciseTypes";
+import { normalizeType, parseRestSeconds, TYPE_LABELS } from "@/lib/exerciseTypes";
 import Stopwatch from "@/components/Stopwatch";
+import RestTimer from "@/components/RestTimer";
 
 export default function SetLogger({
   exerciseId,
   exerciseName,
   exerciseType,
+  restLabel,
   dayName,
   nextSetNumber,
   targetSets,
@@ -19,6 +21,7 @@ export default function SetLogger({
   exerciseId: string,
   exerciseName: string,
   exerciseType?: string | null,
+  restLabel?: string | null,
   dayName: string,
   nextSetNumber: number,
   targetSets: number,
@@ -26,6 +29,7 @@ export default function SetLogger({
 }) {
   const router = useRouter();
   const type = normalizeType(exerciseType);
+  const restSeconds = parseRestSeconds(restLabel);
   const [isPending, startTransition] = useTransition();
   const [success, setSuccess] = useState(false);
   const [setNumber, setSetNumber] = useState(nextSetNumber);
@@ -35,6 +39,9 @@ export default function SetLogger({
   const [seconds, setSeconds] = useState<string>("");
   const [distance, setDistance] = useState<string>("");
   const [showExtraForm, setShowExtraForm] = useState(false);
+  // Bumping the key restarts the countdown when a new set is logged mid-rest.
+  const [restKey, setRestKey] = useState(0);
+  const [resting, setResting] = useState(false);
 
   const totalSeconds =
     (parseInt(minutes || "0") || 0) * 60 + (parseInt(seconds || "0") || 0);
@@ -71,10 +78,18 @@ export default function SetLogger({
 
       if (res.success) {
         setSuccess(true);
-        setSetNumber(prev => prev + 1);
         setShowExtraForm(false);
         resetFields();
         setTimeout(() => setSuccess(false), 2000);
+
+        // Start the rest countdown automatically — logging the set is the cue,
+        // so there is nothing extra to tap. Skipped once the sets are done.
+        const nextSet = setNumber + 1;
+        setSetNumber(nextSet);
+        if (restSeconds && nextSet <= targetSets) {
+          setRestKey(k => k + 1);
+          setResting(true);
+        }
       }
     });
   };
@@ -154,6 +169,12 @@ export default function SetLogger({
 
   return (
     <div>
+      {resting && restSeconds && (
+        <div className="mb-4">
+          <RestTimer key={restKey} seconds={restSeconds} onDismiss={() => setResting(false)} />
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-semibold">
           {showExtraForm ? `Log Extra ${unitLabel}` : `Log ${unitLabel}`}
@@ -209,6 +230,16 @@ export default function SetLogger({
           {isPending ? <Loader2 size={20} className="animate-spin" /> : success ? <Check size={20} /> : <Plus size={20} />}
           {isPending ? "Saving..." : success ? "Saved!" : showExtraForm ? `Log Extra ${unitLabel}` : `Log ${unitLabel} ${setNumber}`}
         </button>
+
+        {restSeconds && !resting && (
+          <button
+            type="button"
+            onClick={() => { setRestKey(k => k + 1); setResting(true); }}
+            className="w-full flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors py-1"
+          >
+            <Timer size={14} /> Start rest ({restLabel})
+          </button>
+        )}
       </form>
     </div>
   );
