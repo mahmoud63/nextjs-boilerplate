@@ -9,7 +9,7 @@ function PhoneFrame({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative w-[280px] sm:w-[320px] shrink-0">
       <div className="absolute -inset-6 bg-neon-lime/10 blur-3xl rounded-full" aria-hidden />
-      <div className="relative border-2 border-surface-container-high bg-surface p-3 shadow-2xl">
+      <div className="relative border-2 border-surface-container-high bg-surface p-3">
         <div className="flex justify-center mb-3">
           <span className="h-1 w-16 bg-surface-container-high" aria-hidden />
         </div>

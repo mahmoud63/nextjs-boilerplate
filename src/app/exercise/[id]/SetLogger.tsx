@@ -2,11 +2,12 @@
 
 import { useState, useTransition } from "react";
 import { logSet } from "@/app/actions";
-import { Plus, Check, Loader2, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Plus, Check, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { normalizeType, TYPE_LABELS } from "@/lib/exerciseTypes";
 import Stopwatch from "@/components/Stopwatch";
 import RestTimer from "@/components/RestTimer";
+import { Button, Card, Chip, Divider, Field, SegmentedProgress } from "@/components/ui";
 
 export default function SetLogger({
   exerciseId,
@@ -102,39 +103,41 @@ export default function SetLogger({
   const isCompleted = setNumber > targetSets;
   const isOneExtraDone = setNumber > targetSets + 1;
   const unitLabel = type === "CARDIO" ? "Round" : "Set";
+  const loggedSets = Math.min(targetSets, setNumber - 1);
 
   if (isCompleted && !showExtraForm) {
     return (
-      <div className="bg-card border border-muted rounded-2xl p-6 shadow-lg flex flex-col items-center justify-center space-y-4 text-center">
-        <div className="w-12 h-12 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mb-2">
-          <CheckCircle2 size={24} />
-        </div>
-        <h3 className="text-xl font-bold">Target {unitLabel}s Reached!</h3>
-        <p className="text-sm text-muted-foreground mb-4">Great job! You've finished the required {unitLabel.toLowerCase()}s for this exercise.</p>
+      <Card className="text-center" padded>
+        <p className="text-eyebrow uppercase text-fg-dim">Target reached</p>
+        <p className="mt-3 font-display text-title-lg uppercase text-fg">
+          {targetSets} / {targetSets} {unitLabel}s
+        </p>
+        <SegmentedProgress total={targetSets} filled={targetSets} className="mt-4" />
 
-        <div className="w-full space-y-3">
-          <button
+        <div className="mt-6 space-y-2">
+          <Button
+            fullWidth
+            size="lg"
             onClick={handleNextExercise}
-            className="w-full bg-primary text-primary-foreground font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all"
+            iconRight={<ArrowRight size={18} />}
           >
-            {nextExerciseId ? "Go to Next Exercise" : "Finish & Go to Dashboard"} <ArrowRight size={18} />
-          </button>
+            {nextExerciseId ? "Next exercise" : "Finish session"}
+          </Button>
 
           {!isOneExtraDone && (
-            <button
+            <Button
+              fullWidth
+              variant="ghost"
               onClick={() => setShowExtraForm(true)}
-              className="w-full bg-background border border-muted text-muted-foreground font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-muted/50 transition-all"
+              icon={<Plus size={16} />}
             >
-              <Plus size={18} /> Add 1 Extra {unitLabel}
-            </button>
+              Add 1 extra {unitLabel.toLowerCase()}
+            </Button>
           )}
         </div>
-      </div>
+      </Card>
     );
   }
-
-  const inputClass = "w-full bg-background border border-muted rounded-xl p-3 text-lg font-bold focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all";
-  const labelClass = "text-xs font-medium text-muted-foreground uppercase tracking-wider";
 
   const handleStopwatchStop = (totalSeconds: number) => {
     setMinutes(String(Math.floor(totalSeconds / 60)));
@@ -144,22 +147,10 @@ export default function SetLogger({
   const durationFields = (
     <div className="space-y-3">
       <Stopwatch onStop={handleStopwatchStop} disabled={isPending} />
-      <div className="flex items-center gap-3">
-        <span className="h-px flex-1 bg-muted" />
-        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-          Or enter manually
-        </span>
-        <span className="h-px flex-1 bg-muted" />
-      </div>
-      <div className="flex gap-4">
-        <div className="flex-1 space-y-1">
-          <label className={labelClass}>Minutes</label>
-          <input type="number" min="0" value={minutes} onChange={(e) => setMinutes(e.target.value)} placeholder="0" className={inputClass} />
-        </div>
-        <div className="flex-1 space-y-1">
-          <label className={labelClass}>Seconds</label>
-          <input type="number" min="0" max="59" value={seconds} onChange={(e) => setSeconds(e.target.value)} placeholder="0" className={inputClass} />
-        </div>
+      <Divider label="Or enter manually" />
+      <div className="flex gap-3">
+        <Field label="Minutes" numeric inputMode="numeric" type="number" min="0" value={minutes} onChange={(e) => setMinutes(e.target.value)} placeholder="0" wrapperClassName="flex-1" />
+        <Field label="Seconds" numeric inputMode="numeric" type="number" min="0" max="59" value={seconds} onChange={(e) => setSeconds(e.target.value)} placeholder="0" wrapperClassName="flex-1" />
       </div>
     </div>
   );
@@ -167,68 +158,72 @@ export default function SetLogger({
   return (
     <div>
       {resting && (
-        <div className="mb-4">
+        <div className="mb-3">
           <RestTimer key={restKey} onStop={() => setResting(false)} />
         </div>
       )}
 
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold">
-          {showExtraForm ? `Log Extra ${unitLabel}` : `Log ${unitLabel}`}
-        </h2>
-        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground bg-muted/50 px-2 py-1 rounded-md">
-          {TYPE_LABELS[type]}
-        </span>
+      <div className="flex items-end justify-between mb-2">
+        <div>
+          <p className="text-eyebrow uppercase text-fg-dim">
+            {showExtraForm ? `Extra ${unitLabel}` : TYPE_LABELS[type]}
+          </p>
+          <h2 className="mt-1 font-display text-title-md uppercase text-fg">
+            {unitLabel} {setNumber}
+          </h2>
+        </div>
+        <Chip variant="outline">
+          {loggedSets}/{targetSets}
+        </Chip>
       </div>
-      <form onSubmit={handleSubmit} className="bg-card border border-muted rounded-2xl p-4 shadow-lg space-y-4">
-        {type === "WEIGHTS" && (
-          <div className="flex gap-4">
-            <div className="flex-1 space-y-1">
-              <label className={labelClass}>Weight (kg)</label>
-              <input type="number" step="0.5" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="0" className={inputClass} required />
-            </div>
-            <div className="flex-1 space-y-1">
-              <label className={labelClass}>Reps</label>
-              <input type="number" value={reps} onChange={(e) => setReps(e.target.value)} placeholder="0" className={inputClass} required />
-            </div>
-          </div>
-        )}
 
-        {type === "BODYWEIGHT" && (
-          <div className="flex gap-4">
-            <div className="flex-1 space-y-1">
-              <label className={labelClass}>Reps</label>
-              <input type="number" value={reps} onChange={(e) => setReps(e.target.value)} placeholder="0" className={inputClass} required />
+      <SegmentedProgress total={targetSets} filled={loggedSets} className="mb-3" />
+
+      {/* The form is the active element on this screen, so it takes the lime border
+          and the glow — it is what the user is looking for with a bar in hand. */}
+      <Card active padded>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {type === "WEIGHTS" && (
+            <div className="flex gap-3">
+              <Field label="Weight" suffix="kg" numeric inputMode="decimal" type="number" step="0.5" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="0" required wrapperClassName="flex-1" />
+              <Field label="Reps" numeric inputMode="numeric" type="number" value={reps} onChange={(e) => setReps(e.target.value)} placeholder="0" required wrapperClassName="flex-1" />
             </div>
-            <div className="flex-1 space-y-1">
-              <label className={labelClass}>Added Weight (kg)</label>
-              <input type="number" step="0.5" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="0" className={inputClass} />
+          )}
+
+          {type === "BODYWEIGHT" && (
+            <div className="flex gap-3">
+              <Field label="Reps" numeric inputMode="numeric" type="number" value={reps} onChange={(e) => setReps(e.target.value)} placeholder="0" required wrapperClassName="flex-1" />
+              <Field label="Added" suffix="kg" numeric inputMode="decimal" type="number" step="0.5" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="0" wrapperClassName="flex-1" />
             </div>
-          </div>
-        )}
+          )}
 
-        {type === "TIMED" && durationFields}
+          {type === "TIMED" && durationFields}
 
-        {type === "CARDIO" && (
-          <div className="space-y-4">
-            {durationFields}
-            <div className="space-y-1">
-              <label className={labelClass}>Distance (km) — optional</label>
-              <input type="number" step="0.01" value={distance} onChange={(e) => setDistance(e.target.value)} placeholder="0" className={inputClass} />
+          {type === "CARDIO" && (
+            <div className="space-y-4">
+              {durationFields}
+              <Field label="Distance" suffix="km" hint="Optional" numeric inputMode="decimal" type="number" step="0.01" value={distance} onChange={(e) => setDistance(e.target.value)} placeholder="0" />
             </div>
-          </div>
-        )}
+          )}
 
-        <button
-          type="submit"
-          disabled={isPending || !canSubmit}
-          className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground font-bold rounded-xl p-3 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
-        >
-          {isPending ? <Loader2 size={20} className="animate-spin" /> : success ? <Check size={20} /> : <Plus size={20} />}
-          {isPending ? "Saving..." : success ? "Saved!" : showExtraForm ? `Log Extra ${unitLabel}` : `Log ${unitLabel} ${setNumber}`}
-        </button>
-
-      </form>
+          <Button
+            type="submit"
+            fullWidth
+            size="lg"
+            disabled={!canSubmit}
+            loading={isPending}
+            icon={!isPending ? (success ? <Check size={18} /> : <Plus size={18} />) : undefined}
+          >
+            {isPending
+              ? "Saving"
+              : success
+              ? "Saved"
+              : showExtraForm
+              ? `Log extra ${unitLabel.toLowerCase()}`
+              : `Log ${unitLabel.toLowerCase()} ${setNumber}`}
+          </Button>
+        </form>
+      </Card>
     </div>
   );
 }

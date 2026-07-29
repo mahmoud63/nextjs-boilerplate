@@ -64,39 +64,39 @@ export default function MyPublishedManager({
     <div className="space-y-4">
       {isPending && (
         <div className="fixed inset-0 bg-background/50 backdrop-blur-sm z-[100] flex items-center justify-center">
-          <Loader2 className="animate-spin text-primary w-10 h-10" />
+          <Loader2 className="animate-spin text-accent w-10 h-10" />
         </div>
       )}
 
       {publishedProfiles.length === 0 ? (
-        <div className="text-center text-muted-foreground p-8 bg-card rounded-2xl border border-muted">
+        <div className="text-center text-fg-muted p-8 bg-panel border border-line">
           You haven't published any routines yet.
         </div>
       ) : (
         publishedProfiles.map(p => (
-          <div key={p.id} className="bg-card p-5 rounded-3xl border border-muted shadow-sm flex flex-col gap-4">
+          <div key={p.id} className="bg-panel p-5 border border-line flex flex-col gap-4">
             <div className="flex justify-between items-start">
               <div className="flex-1 min-w-0">
-                <h3 className="font-black text-foreground text-lg leading-tight uppercase truncate">{p.name}</h3>
-                <p className="text-xs font-semibold text-muted-foreground truncate">Last synced: {new Date(p.updatedAt).toLocaleDateString()}</p>
+                <h3 className="font-bold text-fg text-lg leading-tight uppercase truncate">{p.name}</h3>
+                <p className="text-xs font-semibold text-fg-muted truncate">Last synced: {new Date(p.updatedAt).toLocaleDateString()}</p>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => handleEdit(p)} className="p-2 text-primary bg-primary/10 rounded-xl">
+                <button onClick={() => handleEdit(p)} className="p-2 text-accent bg-field">
                   <Edit3 size={18} />
                 </button>
-                <button onClick={() => handleDelete(p.id, p.name)} className="p-2 text-destructive bg-destructive/10 rounded-xl">
+                <button onClick={() => handleDelete(p.id, p.name)} className="p-2 text-destructive bg-destructive/10">
                   <Trash2 size={18} />
                 </button>
               </div>
             </div>
 
-            <p className="text-sm text-foreground/80 font-medium bg-muted/30 p-3 rounded-xl border border-muted/50 leading-snug">
+            <p className="text-sm text-fg-muted font-medium bg-field p-3 border border-line leading-snug">
               {p.description}
             </p>
 
             <button 
               onClick={() => editInStudio(p.name, p.sourceProfileId)}
-              className="w-full flex items-center justify-center gap-2 bg-secondary text-secondary-foreground p-3 rounded-xl font-bold text-sm hover:bg-secondary/80 transition-colors"
+              className="w-full flex items-center justify-center gap-2 bg-secondary text-secondary-foreground p-3 font-bold text-sm hover:bg-secondary/80 transition-colors"
             >
               Edit in Studio <ArrowRight size={16} />
             </button>
@@ -106,35 +106,35 @@ export default function MyPublishedManager({
 
       {editModal && (
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-card w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-muted">
+          <div className="bg-panel w-full max-w-sm p-6 border border-line">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-black text-foreground">Edit Details</h3>
-              <button onClick={() => setEditModal(null)} className="text-muted-foreground">
+              <h3 className="text-xl font-bold text-fg">Edit Details</h3>
+              <button onClick={() => setEditModal(null)} className="text-fg-muted">
                 <X size={20} />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Name</label>
+                <label className="text-xs font-bold text-fg-muted uppercase mb-1 block">Name</label>
                 <input 
                   type="text" 
                   value={editName}
                   onChange={e => setEditName(e.target.value)}
-                  className="w-full bg-background border border-muted rounded-xl p-3 text-sm font-semibold focus:border-primary"
+                  className="w-full bg-background border border-line p-3 text-sm font-semibold focus:border-accent"
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">Description</label>
+                <label className="text-xs font-bold text-fg-muted uppercase mb-1 block">Description</label>
                 <textarea 
                   value={editDesc}
                   onChange={e => setEditDesc(e.target.value)}
-                  className="w-full bg-background border border-muted rounded-xl p-3 text-sm font-semibold focus:border-primary h-24 resize-none"
+                  className="w-full bg-background border border-line p-3 text-sm font-semibold focus:border-accent h-24 resize-none"
                 />
               </div>
             </div>
             <div className="mt-6 flex gap-3">
-              <button onClick={() => setEditModal(null)} className="flex-1 py-3 bg-muted rounded-xl font-bold text-sm">Cancel</button>
-              <button onClick={saveEdit} className="flex-1 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm">Save Changes</button>
+              <button onClick={() => setEditModal(null)} className="flex-1 py-3 bg-field font-bold text-sm">Cancel</button>
+              <button onClick={saveEdit} className="flex-1 py-3 bg-accent-fill text-on-accent font-bold text-sm">Save Changes</button>
             </div>
           </div>
         </div>

@@ -1,6 +1,8 @@
 "use client";
 
-import { X, AlertCircle, CheckCircle2, Info } from "lucide-react";
+import { Check, CircleAlert, Info, TriangleAlert } from "lucide-react";
+import { Button } from "./Button";
+import { Modal } from "./Modal";
 
 export type AlertType = "success" | "error" | "info" | "warning";
 
@@ -15,50 +17,60 @@ export interface AlertModalProps {
   type?: AlertType;
 }
 
-export default function AlertModal({ isOpen, onClose, onConfirm, confirmText = "Confirm", cancelText = "Cancel", title, message, type = "info" }: AlertModalProps) {
-  if (!isOpen) return null;
+/* Green/red/orange are gone: the system is monochrome plus lime plus one danger
+   tone, and a stoplight palette inside a lime-accented dialog reads as a different
+   product. Icon shape carries the type instead of hue. */
+const ICONS = {
+  success: <Check size={18} className="text-accent shrink-0" />,
+  error: <CircleAlert size={18} className="text-danger shrink-0" />,
+  warning: <TriangleAlert size={18} className="text-danger shrink-0" />,
+  info: <Info size={18} className="text-fg-muted shrink-0" />,
+} as const;
+
+/** Thin wrapper over the Modal shell — prop API unchanged for existing call sites. */
+export default function AlertModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  confirmText = "Confirm",
+  cancelText = "Cancel",
+  title,
+  message,
+  type = "info",
+}: AlertModalProps) {
+  const destructive = type === "error" || type === "warning";
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-background/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-card w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-200 border border-muted flex flex-col items-center text-center">
-        
-        {type === "success" && <CheckCircle2 size={48} className="text-green-500 mb-4" />}
-        {type === "error" && <AlertCircle size={48} className="text-red-500 mb-4" />}
-        {type === "warning" && <AlertCircle size={48} className="text-orange-500 mb-4" />}
-        {type === "info" && <Info size={48} className="text-primary mb-4" />}
-
-        <h3 className="text-xl font-black text-foreground mb-2">{title}</h3>
-        <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-          {message}
-        </p>
-
-        {onConfirm ? (
-          <div className="flex gap-3 w-full">
-            <button 
-              onClick={onClose}
-              className="flex-1 bg-muted text-muted-foreground py-3 rounded-xl font-bold text-sm hover:bg-muted/80 transition-colors"
-            >
+    <Modal
+      open={isOpen}
+      onClose={onClose}
+      title={title}
+      tone={destructive ? "danger" : "default"}
+      icon={ICONS[type]}
+      footer={
+        onConfirm ? (
+          <>
+            <Button variant="ghost" onClick={onClose}>
               {cancelText}
-            </button>
-            <button 
+            </Button>
+            <Button
+              variant={destructive ? "danger" : "primary"}
               onClick={() => {
                 onConfirm();
                 onClose();
               }}
-              className={`flex-1 text-white py-3 rounded-xl font-bold text-sm transition-colors ${type === 'error' || type === 'warning' ? 'bg-red-500 hover:bg-red-600' : 'bg-primary hover:bg-primary/90'}`}
             >
               {confirmText}
-            </button>
-          </div>
+            </Button>
+          </>
         ) : (
-          <button 
-            onClick={onClose}
-            className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors"
-          >
+          <Button variant="primary" onClick={onClose}>
             Okay
-          </button>
-        )}
-      </div>
-    </div>
+          </Button>
+        )
+      }
+    >
+      {message}
+    </Modal>
   );
 }

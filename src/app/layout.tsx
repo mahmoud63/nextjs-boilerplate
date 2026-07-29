@@ -45,7 +45,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#09090b",
+  // Was a single hardcoded near-black, which left a dark status bar sitting above a
+  // bone-white page in light mode.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f4f4f1" },
+    { media: "(prefers-color-scheme: dark)", color: "#0e0e0e" },
+  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -68,7 +73,7 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body
-        className={`min-h-full flex flex-col bg-background text-foreground overscroll-none ${
+        className={`min-h-full flex flex-col bg-background text-fg overscroll-none ${
           isSignedIn ? "pb-20" : ""
         }`}
       >

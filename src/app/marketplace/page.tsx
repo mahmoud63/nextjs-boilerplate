@@ -1,5 +1,6 @@
 import { getMarketplaceProfiles, getRoutineProfiles } from "@/app/actions";
 import MarketplaceManager from "@/app/routines/MarketplaceManager";
+import { PageTitle } from "@/components/ui";
 
 export default async function MarketplacePage() {
   const [result, routinesResult] = await Promise.all([
@@ -10,15 +11,8 @@ export default async function MarketplacePage() {
   const userRoutines = routinesResult.success ? routinesResult.data || [] : [];
 
   return (
-    <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <header className="flex items-center justify-between pb-2">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-accent">Marketplace</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Discover and copy routines from the community
-          </p>
-        </div>
-      </header>
+    <div className="space-y-5 animate-rise">
+      <PageTitle title="Marketplace" eyebrow="Community routines" />
 
       <MarketplaceManager initialProfiles={profiles} userRoutines={userRoutines} />
     </div>

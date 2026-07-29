@@ -22,7 +22,7 @@ function youtubeId(url: string): string | null {
   }
 }
 
-/** Private blobs are not directly fetchable — they go through the authenticated proxy. */
+/** Private blobs are not directly fetchable �?" they go through the authenticated proxy. */
 function proxied(url: string): string {
   return url.includes("vercel-storage.com") ? `/api/blob?url=${encodeURIComponent(url)}` : url;
 }
@@ -48,12 +48,12 @@ export default function ExerciseMedia({
 
   const media = videoUrl ? resolveMedia(videoUrl) : null;
 
-  // Nothing embeddable — fall back to the still image, then to the outbound link.
+  // Nothing embeddable �?" fall back to the still image, then to the outbound link.
   if (!media || media.kind === "external") {
     return (
       <div className="mt-4 space-y-2">
         {imageUrl && (
-          <div className="rounded-xl overflow-hidden border border-muted">
+          <div className="overflow-hidden border border-line">
             <img src={proxied(imageUrl)} alt={name} className="w-full h-auto object-cover max-h-56" />
           </div>
         )}
@@ -62,7 +62,7 @@ export default function ExerciseMedia({
             href={media.src}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-xs font-bold text-primary bg-primary/10 border border-primary/20 rounded-lg px-3 py-2 hover:bg-primary/20 transition-colors"
+            className="inline-flex items-center gap-2 border border-line-strong px-3 py-2 text-eyebrow uppercase text-fg-muted hover:border-accent hover:text-accent transition-colors"
           >
             <ExternalLink size={14} /> Demo opens outside the app
           </a>
@@ -73,7 +73,7 @@ export default function ExerciseMedia({
 
   if (media.kind === "image") {
     return (
-      <div className="mt-4 rounded-xl overflow-hidden border border-muted">
+      <div className="mt-4 overflow-hidden border border-line">
         <img src={media.src} alt={`${name} demo`} className="w-full h-auto object-cover max-h-72" />
       </div>
     );
@@ -81,7 +81,7 @@ export default function ExerciseMedia({
 
   if (media.kind === "video") {
     return (
-      <div className="mt-4 rounded-xl overflow-hidden border border-muted bg-black">
+      <div className="mt-4 overflow-hidden border border-line bg-black">
         <video
           src={media.src}
           poster={imageUrl ? proxied(imageUrl) : undefined}
@@ -98,7 +98,7 @@ export default function ExerciseMedia({
 
   // YouTube: hold the iframe back behind a click so we don't hit YouTube on every page view.
   return (
-    <div className="mt-4 rounded-xl overflow-hidden border border-muted bg-black aspect-video relative">
+    <div className="mt-4 overflow-hidden border border-line bg-black aspect-video relative">
       {playing ? (
         <iframe
           src={`${media.src}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
@@ -120,8 +120,8 @@ export default function ExerciseMedia({
               className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-60 transition-opacity"
             />
           )}
-          <PlayCircle size={48} className="relative drop-shadow-lg group-hover:scale-110 transition-transform" />
-          <span className="relative text-xs font-bold uppercase tracking-wider">Play demo</span>
+          <PlayCircle size={48} className="relative group-hover:scale-110 transition-transform" />
+          <span className="relative text-eyebrow uppercase">Play demo</span>
         </button>
       )}
     </div>

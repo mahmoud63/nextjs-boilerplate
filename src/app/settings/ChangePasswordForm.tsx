@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { changePassword } from "@/app/actions";
-import { Loader2, KeyRound } from "lucide-react";
+import { KeyRound } from "lucide-react";
+import { Button, Card, Field } from "@/components/ui";
 
 export default function ChangePasswordForm() {
   const [oldPass, setOldPass] = useState("");
@@ -29,7 +30,7 @@ export default function ChangePasswordForm() {
     startTransition(async () => {
       const res = await changePassword(oldPass, newPass);
       if (res.success) {
-        setSuccess("Password changed successfully!");
+        setSuccess("Password changed.");
         setOldPass("");
         setNewPass("");
         setConfirmPass("");
@@ -40,53 +41,47 @@ export default function ChangePasswordForm() {
   };
 
   return (
-    <div className="bg-card border border-muted p-5 rounded-2xl shadow-sm space-y-4">
-      <h3 className="font-bold text-foreground flex items-center gap-2">
-        <KeyRound size={18} className="text-primary" /> Change Password
-      </h3>
+    <Card>
+      <p className="flex items-center gap-2 text-eyebrow uppercase text-fg">
+        <KeyRound size={14} className="text-fg-dim" /> Change password
+      </p>
 
-      {error && <p className="text-red-500 text-xs font-medium">{error}</p>}
-      {success && <p className="text-green-500 text-xs font-medium">{success}</p>}
+      {error && <p className="mt-3 text-body-sm text-danger">{error}</p>}
+      {success && <p className="mt-3 text-body-sm text-accent">{success}</p>}
 
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div>
-          <label className="text-xs font-bold text-muted-foreground block mb-1">Current Password</label>
-          <input 
-            type="password" 
-            required 
-            value={oldPass} 
-            onChange={e => setOldPass(e.target.value)}
-            className="w-full bg-background border border-muted rounded-lg p-2 text-sm focus:border-primary transition-colors"
-          />
-        </div>
-        <div>
-          <label className="text-xs font-bold text-muted-foreground block mb-1">New Password</label>
-          <input 
-            type="password" 
-            required 
-            value={newPass} 
-            onChange={e => setNewPass(e.target.value)}
-            className="w-full bg-background border border-muted rounded-lg p-2 text-sm focus:border-primary transition-colors"
-          />
-        </div>
-        <div>
-          <label className="text-xs font-bold text-muted-foreground block mb-1">Confirm New Password</label>
-          <input 
-            type="password" 
-            required 
-            value={confirmPass} 
-            onChange={e => setConfirmPass(e.target.value)}
-            className="w-full bg-background border border-muted rounded-lg p-2 text-sm focus:border-primary transition-colors"
-          />
-        </div>
-        <button 
-          type="submit" 
-          disabled={isPending || !oldPass || !newPass || !confirmPass}
-          className="w-full bg-foreground text-background py-2 rounded-lg font-bold flex items-center justify-center disabled:opacity-50 mt-2 hover:bg-foreground/90 transition-colors"
+      <form onSubmit={handleSubmit} className="mt-4 space-y-3">
+        <Field
+          label="Current password"
+          type="password"
+          required
+          value={oldPass}
+          onChange={e => setOldPass(e.target.value)}
+        />
+        <Field
+          label="New password"
+          type="password"
+          required
+          hint="At least 6 characters"
+          value={newPass}
+          onChange={e => setNewPass(e.target.value)}
+        />
+        <Field
+          label="Confirm new password"
+          type="password"
+          required
+          value={confirmPass}
+          onChange={e => setConfirmPass(e.target.value)}
+        />
+        <Button
+          type="submit"
+          fullWidth
+          disabled={!oldPass || !newPass || !confirmPass}
+          loading={isPending}
+          className="mt-1"
         >
-          {isPending ? <Loader2 size={18} className="animate-spin" /> : "Update Password"}
-        </button>
+          Update password
+        </Button>
       </form>
-    </div>
+    </Card>
   );
 }

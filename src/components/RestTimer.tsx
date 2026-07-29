@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Square } from "lucide-react";
 import FixedDigits from "./FixedDigits";
 import { formatClock } from "@/lib/exerciseTypes";
+import { Button } from "@/components/ui";
 
 /**
  * Counts rest time upward. No target, no countdown — it just runs until stopped.
@@ -23,24 +24,19 @@ export default function RestTimer({ onStop }: { onStop: () => void }) {
   }, []);
 
   return (
-    <div className="rounded-xl border border-muted bg-background p-4">
+    <div className="border border-line bg-panel p-4">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-          Resting
-        </span>
-        <button
-          type="button"
-          onClick={onStop}
-          className="flex items-center gap-1.5 rounded-lg border border-muted px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
-        >
-          <Square size={13} /> Stop
-        </button>
+        <span className="text-eyebrow uppercase text-accent">Resting</span>
+        <Button variant="ghost" size="sm" onClick={onStop} icon={<Square size={12} />}>
+          Stop
+        </Button>
       </div>
 
+      {/* Lime while the clock runs: rest is the one thing happening right now. */}
       <div className="mt-2 flex justify-center">
         <FixedDigits
           value={formatClock(elapsed)}
-          className="font-display text-4xl leading-none text-foreground"
+          className="font-display text-hero-num leading-none text-accent"
         />
         <span className="sr-only">{elapsed} seconds of rest</span>
       </div>

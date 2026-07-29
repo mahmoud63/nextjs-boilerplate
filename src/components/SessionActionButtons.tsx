@@ -2,7 +2,8 @@
 
 import { useTransition } from "react";
 import { updateSessionStatus } from "@/app/actions";
-import { CheckCircle2, Loader2, FastForward } from "lucide-react";
+import { Check, FastForward } from "lucide-react";
+import { Button } from "@/components/ui";
 
 export default function SessionActionButtons({ dayName, currentStatus, hasAnyProgress }: { dayName: string, currentStatus?: string | null, hasAnyProgress?: boolean }) {
   const [isPending, startTransition] = useTransition();
@@ -25,33 +26,33 @@ export default function SessionActionButtons({ dayName, currentStatus, hasAnyPro
   const isSkipped = currentStatus === "SKIPPED";
   const isDisabled = isPending || isCompleted || isSkipped;
 
+  /* Both actions stay monochrome. The active exercise row above already spends the
+     screen's lime, and two lime CTAs would flatten the hierarchy it creates. */
   return (
-    <div className="mt-6 flex flex-col gap-3">
-      <button
+    <div className="mt-2 flex flex-col gap-2">
+      <Button
+        variant="secondary"
+        size="lg"
+        fullWidth
         onClick={() => handleStatusUpdate("COMPLETED")}
         disabled={isDisabled}
-        className={`w-full flex items-center justify-center gap-2 font-bold rounded-xl p-3 transition-all ${
-          isCompleted 
-            ? "bg-primary text-primary-foreground border border-primary opacity-50 cursor-not-allowed" 
-            : "bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30 active:scale-[0.98] disabled:opacity-50"
-        }`}
+        loading={isPending}
+        icon={<Check size={18} />}
       >
-        {isPending ? <Loader2 size={20} className="animate-spin" /> : <CheckCircle2 size={20} />}
-        {isPending ? "Updating..." : isCompleted ? "Completed" : "Mark Day Complete"}
-      </button>
+        {isPending ? "Updating" : isCompleted ? "Completed" : "Mark day complete"}
+      </Button>
 
-      <button
+      <Button
+        variant="ghost"
+        size="md"
+        fullWidth
         onClick={() => handleStatusUpdate("SKIPPED")}
         disabled={isDisabled}
-        className={`w-full flex items-center justify-center gap-2 font-bold rounded-xl p-3 transition-all ${
-          isSkipped
-            ? "bg-red-500/20 text-red-500 border border-red-500 opacity-50 cursor-not-allowed"
-            : "bg-muted/30 text-muted-foreground border border-muted hover:bg-muted/50 active:scale-[0.98] disabled:opacity-50"
-        }`}
+        loading={isPending}
+        icon={<FastForward size={16} />}
       >
-        {isPending ? <Loader2 size={20} className="animate-spin" /> : <FastForward size={20} />}
-        {isPending ? "Updating..." : isSkipped ? "Skipped" : "Skip Day"}
-      </button>
+        {isPending ? "Updating" : isSkipped ? "Skipped" : "Skip day"}
+      </Button>
     </div>
   );
 }

@@ -1,15 +1,22 @@
 // Beast Tracker Main Dashboard Component
 import { getTodaySession, getRoutineDay, getAllRoutineDays, getAllCycleSessions } from "@/app/actions";
-import Link from "next/link";
-import { ChevronRight, CalendarDays, Flame, CheckCircle2, FastForward } from "lucide-react";
+import { ChevronRight, Check, FastForward } from "lucide-react";
 import DaySelector from "@/components/DaySelector";
 import SessionActionButtons from "@/components/SessionActionButtons";
 import ResetCycleButton from "@/components/ResetCycleButton";
 import RichText from "@/components/RichText";
+import {
+  ButtonLink,
+  Card,
+  EmptyState,
+  ListGroup,
+  ListRow,
+  Panel,
+} from "@/components/ui";
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ day?: string }> }) {
   const { day } = await searchParams;
-  
+
   const allDaysResult = await getAllRoutineDays();
   const allDays = allDaysResult.success ? allDaysResult.data || [] : [];
 
@@ -24,7 +31,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
     mappedDays = allDays.map((routineDay: any) => {
       let status = "IDLE";
       const session = cycleSessions.find((s: any) => s.dayName === routineDay.dayName);
-      
+
       if (session) {
         const virtualStatusLog = session.exercises.find((e: any) => e.exerciseName.startsWith("SYSTEM_STATUS_"));
         if (virtualStatusLog) {
@@ -66,7 +73,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
       defaultMappedDay = 1;
     }
   }
-  
+
   const selectedDay = day ? parseInt(day, 10) : defaultMappedDay;
 
   const routineDayResult = await getRoutineDay(selectedDay);
@@ -74,13 +81,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
 
   if (!activeRoutine) {
     return (
-      <div className="flex flex-col items-center justify-center p-10 text-center space-y-4">
-        <h2 className="text-xl font-bold">Day not found</h2>
-        <p className="text-muted-foreground">It seems this day hasn't been configured yet.</p>
-        <Link href="/settings" className="bg-primary text-primary-foreground px-4 py-2 rounded-xl">
-          Go to Settings
-        </Link>
-      </div>
+      <EmptyState
+        title="Day not found"
+        message="This day hasn't been configured yet."
+        action={<ButtonLink href="/settings">Go to settings</ButtonLink>}
+      />
     );
   }
 
@@ -94,7 +99,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
 
   if (session && !activeRoutine.isRestDay) {
     let completedCount = 0;
-    
+
     // Extract virtual status
     const statusLog = session.exercises.find(e => e.exerciseName.startsWith("SYSTEM_STATUS_"));
     if (statusLog) {
@@ -111,7 +116,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
         exerciseCompletion[ex.id] = false;
       }
     });
-    
+
     if (completedCount === activeRoutine.exercises.length && activeRoutine.exercises.length > 0) {
       allCompleted = true;
     }
@@ -125,129 +130,148 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
   const hasAnyProgress = session?.exercises && session.exercises.length > 0;
   const isDayCompleted = virtualStatus === "COMPLETED" || allCompleted;
   const isDaySkipped = virtualStatus === "SKIPPED";
-  const hasFinishedState = isDayCompleted || isDaySkipped;
 
-  const sectionBorderClass = isDayCompleted ? "border-green-500/50" : isDaySkipped ? "border-red-500/50" : "border-muted";
+  // Ordered exercise list, so "the next one to do" is a position rather than a lookup.
+  const orderedExercises = activeRoutine.exerciseIds
+    .map((exId: string) => activeRoutine.exercises.find((e: any) => e.id === exId))
+    .filter(Boolean) as typeof activeRoutine.exercises;
+
+  const totalExercises = orderedExercises.length;
+  const doneExercises = orderedExercises.filter(ex => exerciseCompletion[ex.id]).length;
+  const remaining = Math.max(0, totalExercises - doneExercises);
+
+  // Exactly one row may be active — the first unfinished exercise. That row owns the
+  // screen's lime, which is why the Panel below stays monochrome.
+  const activeExerciseId = isDayCompleted || isDaySkipped
+    ? null
+    : orderedExercises.find(ex => !exerciseCompletion[ex.id])?.id ?? null;
 
   return (
-    <div className="flex flex-col space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-accent">Workout</h1>
-          <p className="text-muted-foreground flex items-center gap-1 mt-1">
-            <CalendarDays size={14} /> Select your training day
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <ResetCycleButton />
-          <div className="bg-card p-2 rounded-full border border-primary/20 shadow-[0_0_15px_rgba(255,255,255,0.15)]">
-            <Flame className="text-primary" size={24} />
-          </div>
-        </div>
-      </header>
+    <div className="flex flex-col space-y-4 animate-rise">
+      <div className="flex items-center justify-between">
+        <p className="text-eyebrow uppercase text-fg-dim">Training cycle</p>
+        <ResetCycleButton />
+      </div>
 
       <DaySelector selectedDay={selectedDay} defaultDay={defaultMappedDay} days={mappedDays} />
 
-      <section className={`bg-card border ${sectionBorderClass} rounded-2xl p-5 shadow-lg relative overflow-hidden transition-colors duration-500`}>
-        {selectedDay === defaultMappedDay && (
-          <div className="absolute top-0 right-0 bg-primary/20 text-primary text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">
-            Today
-          </div>
-        )}
-        
-        <h2 className="text-xl font-bold mb-2">{activeRoutine.dayName}</h2>
-        {activeRoutine.description && (
-          <details className="group mb-6 rounded-xl border border-muted bg-background/40">
-            <summary className="cursor-pointer list-none px-4 py-2.5 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors">
-              Session Brief
-              <ChevronRight size={16} className="transition-transform group-open:rotate-90" />
-            </summary>
-            <RichText
-              html={activeRoutine.description}
-              className="px-4 pb-4 text-sm leading-relaxed text-muted-foreground"
-            />
-          </details>
-        )}
+      {activeRoutine.isRestDay ? (
+        <Panel
+          eyebrow={activeRoutine.dayName}
+          value="REST"
+          caption="Recovery day"
+          meta={
+            <div className="flex justify-between">
+              <span>DAY {activeRoutine.dayNumber} / {mappedDays.length}</span>
+              <span>{isDayCompleted ? "LOGGED" : isDaySkipped ? "SKIPPED" : "OPEN"}</span>
+            </div>
+          }
+        />
+      ) : (
+        <Panel
+          eyebrow={activeRoutine.dayName}
+          value={remaining}
+          caption={remaining === 1 ? "Exercise left" : "Exercises left"}
+          progress={{ total: totalExercises, filled: doneExercises }}
+          meta={
+            <div className="flex justify-between">
+              <span>DAY {activeRoutine.dayNumber} / {mappedDays.length}</span>
+              <span>{doneExercises}/{totalExercises} DONE</span>
+            </div>
+          }
+        />
+      )}
 
-        {isDayCompleted && (
-          <div className="mb-6 bg-green-500/10 border border-green-500/20 text-green-500 p-3 rounded-xl flex items-center gap-3">
-            <CheckCircle2 size={24} />
+      {activeRoutine.description && (
+        <details className="group border border-line bg-panel">
+          <summary className="cursor-pointer list-none px-4 py-3 flex items-center justify-between text-eyebrow uppercase text-fg-dim hover:text-fg transition-colors">
+            Session brief
+            <ChevronRight size={14} className="transition-transform group-open:rotate-90" />
+          </summary>
+          <RichText
+            html={activeRoutine.description}
+            className="px-4 pb-4 text-body-sm leading-relaxed text-fg-muted border-t border-line pt-3"
+          />
+        </details>
+      )}
+
+      {isDayCompleted && (
+        <Card className="border-l-[3px] border-l-accent-fill">
+          <div className="flex items-center gap-3">
+            <Check size={20} className="text-accent shrink-0" />
             <div>
-              <p className="font-bold text-sm">Day Completed!</p>
-              <p className="text-xs opacity-80">Awesome job finishing your workout.</p>
+              <p className="text-eyebrow uppercase text-fg">Day completed</p>
+              <p className="mt-1 text-body-sm text-fg-muted">Session closed out. Recover well.</p>
             </div>
           </div>
-        )}
+        </Card>
+      )}
 
-        {isDaySkipped && (
-          <div className="mb-6 bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded-xl flex items-center gap-3">
-            <FastForward size={24} />
+      {isDaySkipped && (
+        <Card className="border-l-[3px] border-l-danger">
+          <div className="flex items-center gap-3">
+            <FastForward size={20} className="text-danger shrink-0" />
             <div>
-              <p className="font-bold text-sm">Day Skipped</p>
-              <p className="text-xs opacity-80">You've skipped this session.</p>
+              <p className="text-eyebrow uppercase text-fg">Day skipped</p>
+              <p className="mt-1 text-body-sm text-fg-muted">This session was passed over.</p>
             </div>
           </div>
-        )}
+        </Card>
+      )}
 
-        {activeRoutine.isRestDay ? (
-          <div className="flex flex-col items-center justify-center py-10 text-center space-y-3">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-              <span className="text-2xl">🧘‍♂️</span>
-            </div>
-            <h3 className="font-semibold text-lg">Rest Day</h3>
-            <p className="text-sm text-muted-foreground">Take it easy and recover for tomorrow.</p>
-            
-            <SessionActionButtons dayName={activeRoutine.dayName} currentStatus={virtualStatus} hasAnyProgress={hasAnyProgress} />
+      {activeRoutine.isRestDay ? (
+        <>
+          <EmptyState
+            title="Rest day"
+            message="Light movement, stretching, water, food. Growth happens now, not under the bar."
+          />
+          <SessionActionButtons dayName={activeRoutine.dayName} currentStatus={virtualStatus} hasAnyProgress={hasAnyProgress} />
+        </>
+      ) : (
+        <>
+          <div className="flex items-baseline justify-between pt-1">
+            <p className="text-eyebrow uppercase text-fg-dim">Exercises</p>
+            <p className="font-mono tnum text-data-sm text-fg-dim">{totalExercises}</p>
           </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-sm uppercase tracking-wider text-primary/80">Exercises ({activeRoutine.exercises.length})</h3>
-            </div>
-            
-            <div className="space-y-2">
-              {activeRoutine.exerciseIds.map((exId: string, idx: number) => {
-                const exercise = activeRoutine.exercises.find((e: any) => e.id === exId);
-                if (!exercise) return null;
-                
-                const isExCompleted = exerciseCompletion[exercise.id];
-                
-                return (
-                  <Link 
-                    key={exercise.id} 
-                    href={`/exercise/${exercise.id}?dayName=${encodeURIComponent(activeRoutine.dayName)}`}
-                    className={`group flex items-center justify-between p-3 rounded-xl bg-background border transition-all ${
-                      isExCompleted ? "border-green-500/30 bg-green-500/5" : "border-transparent hover:border-primary/30 hover:bg-muted/50"
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 ${
-                        isExCompleted ? "bg-green-500/20 text-green-500" : "bg-primary/10 text-primary"
-                      }`}>
-                        {isExCompleted ? <CheckCircle2 size={16} /> : idx + 1}
-                      </div>
-                      <div>
-                        <h4 className={`font-medium text-sm transition-colors line-clamp-1 ${isExCompleted ? "text-green-500" : "group-hover:text-primary"}`}>
-                          {exercise.name}
-                        </h4>
-                        <p className="text-xs text-muted-foreground mt-0.5">{exercise.sets} sets × {exercise.reps} • {exercise.targetMuscle}</p>
-                        {(exercise.targetWeight || exercise.rpe) && (
-                          <p className="text-xs text-muted-foreground/70 mt-0.5">
-                            {[exercise.targetWeight, exercise.rpe && `RPE ${exercise.rpe}`].filter(Boolean).join(" • ")}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <ChevronRight size={18} className="text-muted-foreground group-hover:text-primary transition-colors group-hover:translate-x-1 shrink-0 ml-2" />
-                  </Link>
-                );
-              })}
-            </div>
-            
-            <SessionActionButtons dayName={activeRoutine.dayName} currentStatus={virtualStatus || (allCompleted ? "COMPLETED" : null)} hasAnyProgress={hasAnyProgress} />
-          </div>
-        )}
-      </section>
+
+          <ListGroup>
+            {orderedExercises.map((exercise: any, idx: number) => {
+              const isExCompleted = exerciseCompletion[exercise.id];
+              const meta = [
+                `${exercise.sets}×${exercise.reps}`,
+                exercise.targetMuscle,
+                exercise.targetWeight,
+                exercise.rpe && `RPE ${exercise.rpe}`,
+              ]
+                .filter(Boolean)
+                .join(" · ");
+
+              return (
+                <ListRow
+                  key={exercise.id}
+                  index={idx + 1}
+                  title={exercise.name}
+                  meta={meta}
+                  state={
+                    isExCompleted
+                      ? "done"
+                      : exercise.id === activeExerciseId
+                      ? "active"
+                      : "idle"
+                  }
+                  href={`/exercise/${exercise.id}?dayName=${encodeURIComponent(activeRoutine.dayName)}`}
+                />
+              );
+            })}
+          </ListGroup>
+
+          <SessionActionButtons
+            dayName={activeRoutine.dayName}
+            currentStatus={virtualStatus || (allCompleted ? "COMPLETED" : null)}
+            hasAnyProgress={hasAnyProgress}
+          />
+        </>
+      )}
     </div>
   );
 }

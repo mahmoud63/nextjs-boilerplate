@@ -4,79 +4,56 @@ import { useState } from "react";
 import DaysManager from "@/app/days/DaysManager";
 import ExercisesManager from "@/app/exercises/ExercisesManager";
 import MyPublishedManager from "./MyPublishedManager";
+import { PageTitle, Tabs, type TabItem } from "@/components/ui";
 
-export default function RoutinesTabs({ 
-  initialDays, 
-  initialExercises, 
-  profiles, 
+type Tab = "profiles" | "exercises" | "published";
+
+const TABS: ReadonlyArray<TabItem<Tab>> = [
+  { value: "profiles", label: "Profiles" },
+  { value: "exercises", label: "Exercises" },
+  { value: "published", label: "Published" },
+];
+
+export default function RoutinesTabs({
+  initialDays,
+  initialExercises,
+  profiles,
   currentProfileId,
   publishedProfiles,
   initialTab = "profiles"
-}: { 
-  initialDays: any[], 
-  initialExercises: any[], 
-  profiles: any[], 
+}: {
+  initialDays: any[],
+  initialExercises: any[],
+  profiles: any[],
   currentProfileId: string,
   publishedProfiles: any[],
   initialTab?: string
 }) {
-  const [activeTab, setActiveTab] = useState<"profiles" | "exercises" | "published">(
+  const [activeTab, setActiveTab] = useState<Tab>(
     (initialTab === "published" || initialTab === "exercises" || initialTab === "profiles") ? initialTab : "profiles"
   );
 
   return (
-    <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-      
-      {/* Custom Tab Bar */}
-      <div className="flex bg-muted p-1 rounded-2xl mb-6">
-        <button
-          onClick={() => setActiveTab("profiles")}
-          className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${
-            activeTab === "profiles" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          My Profiles
-        </button>
-        <button
-          onClick={() => setActiveTab("exercises")}
-          className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${
-            activeTab === "exercises" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Exercises
-        </button>
-        <button
-          onClick={() => setActiveTab("published")}
-          className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${
-            activeTab === "published" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          My Published
-        </button>
-      </div>
+    <div className="flex flex-col h-full animate-rise">
+      <PageTitle title="Routines" eyebrow="Library" className="mb-1" />
 
-      {/* Tab Content */}
+      <Tabs items={TABS} value={activeTab} onChange={setActiveTab} className="mb-5" />
+
       <div className="flex-1">
         {activeTab === "profiles" && (
-          <div className="animate-in fade-in slide-in-from-left-4 duration-300">
-            <DaysManager 
-              initialDays={initialDays} 
-              initialExercises={initialExercises} 
-              profiles={profiles} 
-              currentProfileId={currentProfileId} 
-              publishedProfiles={publishedProfiles}
-            />
-          </div>
+          <DaysManager
+            initialDays={initialDays}
+            initialExercises={initialExercises}
+            profiles={profiles}
+            currentProfileId={currentProfileId}
+            publishedProfiles={publishedProfiles}
+          />
         )}
         {activeTab === "exercises" && (
-          <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-            <ExercisesManager initialExercises={initialExercises} />
-          </div>
+          <ExercisesManager initialExercises={initialExercises} />
         )}
         {activeTab === "published" && (
-          <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-            <MyPublishedManager publishedProfiles={publishedProfiles} setActiveTab={setActiveTab} profiles={profiles} />
-          </div>
+          <MyPublishedManager publishedProfiles={publishedProfiles} setActiveTab={setActiveTab} profiles={profiles} />
         )}
       </div>
     </div>

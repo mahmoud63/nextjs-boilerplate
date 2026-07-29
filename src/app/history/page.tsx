@@ -24,7 +24,7 @@ export default async function HistoryPage() {
   const profiles = profilesResult.success ? profilesResult.data || [] : [];
 
   return (
-    <div className="animate-in fade-in slide-in-from-left-4 duration-500">
+    <div className="animate-rise">
       <HistoryManager 
         initialLogs={logs} 
         userHeight={user.height} 

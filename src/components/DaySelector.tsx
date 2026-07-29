@@ -3,12 +3,26 @@
 import { useRouter } from "next/navigation";
 import { Check, FastForward } from "lucide-react";
 
-export default function DaySelector({ selectedDay, defaultDay, days }: { selectedDay: number, defaultDay: number, days: any[] }) {
+/**
+ * The cycle as a strip of mono day cells — the primary way to move between days.
+ *
+ * Hairline-divided rather than gapped pills, so the whole cycle reads as one
+ * instrument scale instead of six separate buttons.
+ */
+export default function DaySelector({
+  selectedDay,
+  days,
+}: {
+  selectedDay: number;
+  /** Unused, kept for call-site compatibility. */
+  defaultDay?: number;
+  days: any[];
+}) {
   const router = useRouter();
 
   return (
-    <div className="bg-card/40 rounded-2xl border border-muted shadow-inner backdrop-blur-sm overflow-x-auto">
-      <div className="flex items-center gap-1.5 p-1.5 w-max min-w-full">
+    <div className="border border-line bg-panel overflow-x-auto">
+      <div className="flex w-max min-w-full">
         {days.map((routine) => {
           const isCompleted = routine.status === "COMPLETED";
           const isSkipped = routine.status === "SKIPPED";
@@ -18,25 +32,34 @@ export default function DaySelector({ selectedDay, defaultDay, days }: { selecte
             <button
               key={routine.id}
               onClick={() => router.push(`/?day=${routine.dayNumber}`)}
-              className={`relative flex flex-col items-center justify-center min-w-[56px] h-14 rounded-xl transition-all duration-300 px-2 ${
-                isSelected 
-                  ? "bg-foreground/15 text-foreground shadow-sm scale-100 ring-1 ring-foreground/20" 
-                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground scale-95"
-              }`}
+              aria-current={isSelected ? "true" : undefined}
+              className={`relative flex-1 min-w-[54px] h-14 flex flex-col items-center justify-center gap-1
+                border-r border-line last:border-r-0 transition-colors duration-[120ms] ease-kinetic ${
+                  isSelected ? "bg-field" : "hover:bg-field/60"
+                }`}
             >
-              <span className={`text-[11px] font-black uppercase tracking-wider ${isSelected ? 'text-foreground' : 'opacity-70'}`}>
+              <span
+                className={`font-mono tnum text-data-sm ${
+                  isSelected ? "text-fg" : "text-fg-dim"
+                }`}
+              >
                 D{routine.dayNumber}
               </span>
-              
-              <div className="mt-1 flex items-center justify-center h-4">
+
+              <span className="flex items-center justify-center h-3.5">
                 {isCompleted ? (
-                  <Check size={14} strokeWidth={4} className={isSelected ? "text-foreground" : "text-green-500/80"} />
+                  <Check size={13} strokeWidth={3} className="text-accent" />
                 ) : isSkipped ? (
-                  <FastForward size={14} strokeWidth={3} className={isSelected ? "text-foreground" : "text-red-500/80"} />
+                  <FastForward size={13} strokeWidth={2.5} className="text-fg-dim" />
                 ) : (
-                  <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? "bg-foreground/80" : "bg-muted-foreground/30"}`}></div>
+                  <span className="w-1 h-1 bg-line-strong" />
                 )}
-              </div>
+              </span>
+
+              {/* Lime underline marks the selected day. */}
+              {isSelected && (
+                <span className="absolute bottom-0 inset-x-0 h-0.5 bg-accent-fill" />
+              )}
             </button>
           );
         })}
@@ -44,4 +67,3 @@ export default function DaySelector({ selectedDay, defaultDay, days }: { selecte
     </div>
   );
 }
-

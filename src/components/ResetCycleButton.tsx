@@ -2,8 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { resetCycle } from "@/app/actions";
-import { RefreshCcw, Loader2 } from "lucide-react";
+import { RefreshCcw } from "lucide-react";
 import ConfirmModal from "./ConfirmModal";
+import { Button } from "@/components/ui";
 
 export default function ResetCycleButton() {
   const [isPending, startTransition] = useTransition();
@@ -17,22 +18,24 @@ export default function ResetCycleButton() {
 
   return (
     <>
-      <button
+      <Button
+        variant="secondary"
+        size="sm"
         onClick={() => setIsModalOpen(true)}
-        disabled={isPending}
-        className="p-2 rounded-full border border-muted hover:border-primary/50 text-muted-foreground hover:text-primary transition-all shadow-sm flex items-center justify-center bg-card"
-        title="Start Next Week"
+        loading={isPending}
+        icon={!isPending ? <RefreshCcw size={14} /> : undefined}
+        title="Start next week"
       >
-        {isPending ? <Loader2 size={16} className="animate-spin" /> : <RefreshCcw size={16} />}
-      </button>
+        New cycle
+      </Button>
 
       <ConfirmModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onConfirm={handleReset}
-        title="Start New Cycle"
-        message="Are you sure you want to reset your dashboard for a new week? Your old sessions will be saved to your History."
-        confirmText="Yes, Start New Week"
+        title="Start new cycle"
+        message="Reset your dashboard for a new week? Your old sessions are saved to History."
+        confirmText="Yes, start new week"
       />
     </>
   );

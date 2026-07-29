@@ -2,8 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { wipeAllProgress } from "@/app/actions";
-import { AlertOctagon, Loader2 } from "lucide-react";
+import { OctagonAlert } from "lucide-react";
 import ConfirmModal from "./ConfirmModal";
+import { Button } from "@/components/ui";
 
 export default function WipeProgressButton() {
   const [isPending, startTransition] = useTransition();
@@ -17,14 +18,16 @@ export default function WipeProgressButton() {
 
   return (
     <>
-      <button
+      <Button
+        variant="danger"
+        size="lg"
+        fullWidth
         onClick={() => setIsModalOpen(true)}
-        disabled={isPending}
-        className="w-full flex items-center justify-center gap-2 bg-red-500/10 text-red-500 hover:bg-red-500/20 active:scale-[0.98] border border-red-500/50 py-3 rounded-xl font-bold transition-all disabled:opacity-50"
+        loading={isPending}
+        icon={<OctagonAlert size={16} />}
       >
-        {isPending ? <Loader2 size={18} className="animate-spin" /> : <AlertOctagon size={18} />}
-        {isPending ? "Wiping Data..." : "Factory Reset All Progress"}
-      </button>
+        {isPending ? "Wiping data" : "Factory reset all progress"}
+      </Button>
 
       <ConfirmModal
         isOpen={isModalOpen}

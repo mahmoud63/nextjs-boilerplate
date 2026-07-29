@@ -4,51 +4,63 @@ import { getCurrentUser } from '@/app/actions';
 import { UserCircle, Info } from 'lucide-react';
 import { BEAST_LOGO_B64 } from '@/lib/logo';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { ButtonLink } from '@/components/ui';
+
+/* Header carries no lime on purpose — it is on every screen, and spending the
+   one-per-viewport accent here would leave nothing for the active set below. */
+const ICON_BUTTON =
+  "p-2 text-fg-dim hover:text-fg hover:bg-field transition-colors duration-[120ms] ease-kinetic";
 
 export default async function Header() {
   const user = await getCurrentUser();
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md">
-      <div className="max-w-md mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3">
+    <header className="sticky top-0 z-50 w-full bg-background/85 backdrop-blur-md border-b border-line">
+      <div className="max-w-md mx-auto px-4 h-14 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2.5 min-w-0">
           <Image
             src={BEAST_LOGO_B64}
             alt="App Icon"
-            width={40}
-            height={40}
-            className="rounded-full bg-black shadow-sm"
+            width={32}
+            height={32}
+            className="bg-black shrink-0"
             unoptimized={true}
           />
-          <span className="font-bold tracking-tight text-xl text-accent uppercase">
+          <span className="font-display text-title-md uppercase text-fg leading-none">
             BT
           </span>
         </Link>
-        <div className="flex items-center gap-4">
-          <Link href="/about" className="text-muted-foreground hover:text-primary transition-colors">
-            <Info size={24} />
+
+        <div className="flex items-center gap-0.5">
+          <Link href="/about" aria-label="About" className={ICON_BUTTON}>
+            <Info size={20} />
           </Link>
+
           <ThemeToggle />
+
           {user ? (
             <Link
               href="/settings"
-              className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-2 pl-1.5 group"
             >
-              <span className="max-w-24 truncate hidden sm:inline-block">{user.email}</span>
+              <span className="hidden sm:inline max-w-24 truncate font-mono text-data-sm text-fg-dim group-hover:text-fg-muted transition-colors">
+                {user.email}
+              </span>
               {user.profilePicUrl ? (
+                /* The avatar is the one intentionally round thing in the app. */
                 <img
                   src={`/api/blob?url=${encodeURIComponent(user.profilePicUrl)}`}
                   alt="Profile"
-                  className="w-8 h-8 rounded-full object-cover border border-muted"
+                  className="w-8 h-8 rounded-full object-cover border border-line-strong"
                 />
               ) : (
-                <UserCircle size={24} />
+                <UserCircle size={22} className="text-fg-dim group-hover:text-fg transition-colors" />
               )}
             </Link>
           ) : (
-            <Link href="/login" className="text-sm font-bold text-primary">
+            <ButtonLink href="/login" variant="secondary" size="sm" className="ml-1">
               Login
-            </Link>
+            </ButtonLink>
           )}
         </div>
       </div>

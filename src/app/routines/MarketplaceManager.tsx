@@ -59,19 +59,19 @@ export default function MarketplaceManager({ initialProfiles, userRoutines }: { 
 
   return (
     <div className="space-y-4">
-      <div className="flex bg-muted/30 p-1.5 rounded-2xl shadow-inner border border-muted/50 mb-6">
+      <div className="flex bg-field p-1.5 border border-line mb-6">
         <button
           onClick={() => setActiveTab("discover")}
-          className={`flex-1 py-2 text-sm font-black uppercase tracking-wider rounded-xl transition-all ${
-            activeTab === "discover" ? "bg-background text-primary shadow-sm border border-muted" : "text-muted-foreground hover:text-foreground"
+          className={`flex-1 py-2 text-sm font-bold uppercase tracking-wider transition-all ${
+            activeTab === "discover" ? "bg-background text-accent border border-line" : "text-fg-muted hover:text-fg"
           }`}
         >
           Discover
         </button>
         <button
           onClick={() => setActiveTab("added")}
-          className={`flex-1 py-2 text-sm font-black uppercase tracking-wider rounded-xl transition-all ${
-            activeTab === "added" ? "bg-background text-primary shadow-sm border border-muted" : "text-muted-foreground hover:text-foreground"
+          className={`flex-1 py-2 text-sm font-bold uppercase tracking-wider transition-all ${
+            activeTab === "added" ? "bg-background text-accent border border-line" : "text-fg-muted hover:text-fg"
           }`}
         >
           My Added
@@ -79,7 +79,7 @@ export default function MarketplaceManager({ initialProfiles, userRoutines }: { 
       </div>
 
       {filteredProfiles.length === 0 ? (
-        <div className="text-center text-muted-foreground p-8 bg-card rounded-2xl border border-muted">
+        <div className="text-center text-fg-muted p-8 bg-panel border border-line">
           No profiles in the marketplace yet.
         </div>
       ) : (
@@ -87,24 +87,24 @@ export default function MarketplaceManager({ initialProfiles, userRoutines }: { 
           <div 
             key={p.id} 
             onClick={() => setSelectedProfile(p)}
-            className="bg-card p-5 rounded-3xl border border-muted shadow-sm flex flex-col gap-4 relative overflow-hidden group cursor-pointer hover:border-primary/50 transition-colors"
+            className="bg-panel p-5 border border-line flex flex-col gap-4 relative overflow-hidden group cursor-pointer hover:border-accent transition-colors"
           >
             <div className="flex gap-4 items-start">
               {p.ownerPicUrl ? (
-                <img src={`/api/blob?url=${encodeURIComponent(p.ownerPicUrl)}`} alt="Owner" className="w-12 h-12 rounded-full object-cover border border-muted shadow-sm bg-black" />
+                <img src={`/api/blob?url=${encodeURIComponent(p.ownerPicUrl)}`} alt="Owner" className="w-12 h-12 rounded-full object-cover border border-line bg-black" />
               ) : (
-                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center border border-muted">
-                  <UserCircle size={28} className="text-muted-foreground" />
+                <div className="w-12 h-12 rounded-full bg-field flex items-center justify-center border border-line">
+                  <UserCircle size={28} className="text-fg-muted" />
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <h3 className="font-black text-foreground text-lg leading-tight uppercase truncate">{p.name}</h3>
-                <p className="text-xs font-semibold text-muted-foreground truncate">by {p.ownerName}</p>
+                <h3 className="font-bold text-fg text-lg leading-tight uppercase truncate">{p.name}</h3>
+                <p className="text-xs font-semibold text-fg-muted truncate">by {p.ownerName}</p>
               </div>
             </div>
             
             {p.description && (
-              <p className="text-sm text-foreground/80 font-medium bg-muted/30 p-3 rounded-xl border border-muted/50 leading-snug line-clamp-2">
+              <p className="text-sm text-fg-muted font-medium bg-field p-3 border border-line leading-snug line-clamp-2">
                 {p.description}
               </p>
             )}
@@ -121,7 +121,7 @@ export default function MarketplaceManager({ initialProfiles, userRoutines }: { 
                     <button 
                       onClick={(e) => handleUpdateLocalCopy(p.id, localMatch.id, e)}
                       disabled={isPending && downloadingId === p.id}
-                      className="w-full flex items-center justify-center gap-2 bg-blue-500 text-white p-3 rounded-xl font-bold text-sm transition-colors hover:bg-blue-600 disabled:opacity-50"
+                      className="w-full flex items-center justify-center gap-2 bg-accent-fill text-white p-3 font-bold text-sm transition-colors hover:bg-accent-dim disabled:opacity-50"
                     >
                       {isPending && downloadingId === p.id ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                       Update Available
@@ -131,7 +131,7 @@ export default function MarketplaceManager({ initialProfiles, userRoutines }: { 
                   return (
                     <button 
                       disabled
-                      className="w-full flex items-center justify-center gap-2 bg-green-500/20 text-green-600 dark:text-green-400 p-3 rounded-xl font-bold text-sm transition-colors opacity-80 cursor-not-allowed border border-green-500/30"
+                      className="w-full flex items-center justify-center gap-2 bg-field text-accent dark:text-accent p-3 font-bold text-sm transition-colors opacity-80 cursor-not-allowed border border-line-strong"
                     >
                       <CheckCircle size={16} />
                       Added
@@ -144,7 +144,7 @@ export default function MarketplaceManager({ initialProfiles, userRoutines }: { 
                 <button 
                   onClick={(e) => handleDownload(p.id, e)}
                   disabled={isPending && downloadingId === p.id}
-                  className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground p-3 rounded-xl font-bold text-sm transition-colors hover:bg-primary/90 disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 bg-accent-fill text-on-accent p-3 font-bold text-sm transition-colors hover:bg-accent-dim disabled:opacity-50"
                 >
                   {isPending && downloadingId === p.id ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
                   Add to Routines
@@ -157,59 +157,59 @@ export default function MarketplaceManager({ initialProfiles, userRoutines }: { 
 
       {/* DETAIL MODAL */}
       {selectedProfile && (
-        <div className="fixed inset-0 bg-background z-[100] overflow-y-auto animate-in slide-in-from-bottom-full duration-300">
+        <div className="fixed inset-0 bg-background z-[100] overflow-y-auto animate-rise duration-300">
           <div className="p-4 md:p-8 max-w-2xl mx-auto pb-24">
             <header className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-black text-primary uppercase tracking-tight">Profile Details</h2>
-              <button onClick={() => setSelectedProfile(null)} className="p-2 bg-muted text-muted-foreground rounded-full">
+              <h2 className="text-2xl font-bold text-accent uppercase tracking-tight">Profile Details</h2>
+              <button onClick={() => setSelectedProfile(null)} className="p-2 bg-field text-fg-muted rounded-full">
                 <X size={24} />
               </button>
             </header>
 
-            <div className="bg-card border border-muted rounded-3xl p-6 shadow-lg space-y-6">
+            <div className="bg-panel border border-line p-6 space-y-6">
               <div className="flex items-center gap-4">
                 {selectedProfile.ownerPicUrl ? (
-                  <img src={`/api/blob?url=${encodeURIComponent(selectedProfile.ownerPicUrl)}`} alt="Owner" className="w-16 h-16 rounded-full object-cover shadow-sm bg-black border border-muted" />
+                  <img src={`/api/blob?url=${encodeURIComponent(selectedProfile.ownerPicUrl)}`} alt="Owner" className="w-16 h-16 rounded-full object-cover bg-black border border-line" />
                 ) : (
-                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center border border-muted">
-                    <UserCircle size={32} className="text-muted-foreground" />
+                  <div className="w-16 h-16 rounded-full bg-field flex items-center justify-center border border-line">
+                    <UserCircle size={32} className="text-fg-muted" />
                   </div>
                 )}
                 <div>
-                  <h1 className="text-2xl font-black text-foreground uppercase">{selectedProfile.name}</h1>
-                  <p className="text-sm font-semibold text-muted-foreground">Created by {selectedProfile.ownerName}</p>
+                  <h1 className="text-2xl font-bold text-fg uppercase">{selectedProfile.name}</h1>
+                  <p className="text-sm font-semibold text-fg-muted">Created by {selectedProfile.ownerName}</p>
                 </div>
               </div>
 
               {selectedProfile.description && (
-                <p className="text-sm text-foreground/90 bg-muted/30 p-4 rounded-xl leading-relaxed">
+                <p className="text-sm text-fg bg-field p-4 leading-relaxed">
                   {selectedProfile.description}
                 </p>
               )}
 
-              <div className="pt-4 border-t border-muted">
-                <h3 className="font-bold text-lg mb-4 text-primary">Included Days</h3>
+              <div className="pt-4 border-t border-line">
+                <h3 className="font-bold text-lg mb-4 text-accent">Included Days</h3>
                 <div className="space-y-4">
                   {selectedProfile.data.routineDays?.sort((a: any, b: any) => a.dayNumber - b.dayNumber).map((day: any) => (
-                    <div key={day.id} className="bg-background border border-muted rounded-2xl p-4 shadow-sm">
+                    <div key={day.id} className="bg-background border border-line p-4">
                       <div className="flex justify-between items-center mb-2">
-                        <h4 className="font-bold text-foreground">Day {day.dayNumber}: {day.dayName}</h4>
-                        {day.isRestDay && <span className="bg-secondary/20 text-secondary text-xs px-2 py-1 rounded-md font-bold">Rest Day</span>}
+                        <h4 className="font-bold text-fg">Day {day.dayNumber}: {day.dayName}</h4>
+                        {day.isRestDay && <span className="bg-secondary/20 text-secondary text-xs px-2 py-1 font-bold">Rest Day</span>}
                       </div>
                       {day.description && (
                         // Preview only — flatten another author's rich text rather than rendering their markup.
-                        <p className="text-xs text-muted-foreground mb-3 line-clamp-3">{toPlainText(day.description)}</p>
+                        <p className="text-xs text-fg-muted mb-3 line-clamp-3">{toPlainText(day.description)}</p>
                       )}
                       
                       {!day.isRestDay && day.exercises && day.exercises.length > 0 && (
                         <div className="space-y-2 mt-3">
                           {day.exercises.map((ex: any) => (
-                            <div key={ex.id} className="flex items-center justify-between bg-muted/40 p-2 rounded-xl text-sm">
+                            <div key={ex.id} className="flex items-center justify-between bg-field p-2 text-sm">
                               <div className="flex items-center gap-2">
-                                <Activity size={16} className="text-primary" />
+                                <Activity size={16} className="text-accent" />
                                 <span className="font-semibold">{ex.name}</span>
                               </div>
-                              <span className="text-xs text-muted-foreground">{ex.sets}x{ex.reps}</span>
+                              <span className="text-xs text-fg-muted">{ex.sets}x{ex.reps}</span>
                             </div>
                           ))}
                         </div>
@@ -220,12 +220,12 @@ export default function MarketplaceManager({ initialProfiles, userRoutines }: { 
               </div>
             </div>
 
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-muted pb-safe">
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-line pb-safe">
               <div className="max-w-2xl mx-auto flex gap-4">
                 <button 
                   onClick={() => handleDownload(selectedProfile.id)}
                   disabled={isPending && downloadingId === selectedProfile.id}
-                  className="flex-1 bg-primary text-primary-foreground py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
+                  className="flex-1 bg-accent-fill text-on-accent py-4 font-bold text-lg flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {isPending && downloadingId === selectedProfile.id ? (
                     <><Loader2 size={24} className="animate-spin" /> Adding to Routines...</>

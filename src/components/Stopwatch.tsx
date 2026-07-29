@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Play, Pause, Square, RotateCcw } from "lucide-react";
 import FixedDigits from "./FixedDigits";
+import { Button } from "@/components/ui";
 
 type Phase = "idle" | "running" | "paused";
 
@@ -102,91 +103,64 @@ export default function Stopwatch({
   };
 
   const { minutes, seconds, centis } = format(elapsed);
-  const btn =
-    "flex-1 flex items-center justify-center gap-2 font-bold rounded-xl py-3 transition-all active:scale-[0.98] disabled:opacity-50";
 
   return (
-    <div className="bg-background border border-muted rounded-xl p-4">
+    <div className="border border-line bg-background p-4">
       <div className="flex items-baseline justify-center">
         <FixedDigits
           value={`${minutes}:${seconds}`}
-          className={`font-display text-5xl leading-none transition-colors ${
-            phase === "running" ? "text-primary" : "text-foreground"
+          className={`font-display text-hero-num leading-none transition-colors ${
+            phase === "running" ? "text-accent" : "text-fg"
           }`}
         />
         <FixedDigits
           value={`.${centis}`}
-          className="font-display text-2xl leading-none text-muted-foreground"
+          className="font-display text-title-md leading-none text-fg-dim"
         />
         <span className="sr-only">
           {minutes} minutes {seconds} seconds
         </span>
       </div>
 
-      <p className="mt-1 text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+      <p className="mt-1 text-center text-eyebrow uppercase text-fg-dim">
         {phase === "running" ? "Running" : phase === "paused" ? "Paused" : "Min : Sec . Cs"}
       </p>
 
       <div className="mt-4 flex gap-2">
         {phase === "idle" && (
-          <button
-            type="button"
-            onClick={start}
-            disabled={disabled}
-            className={`${btn} bg-primary text-primary-foreground`}
-          >
-            <Play size={18} /> Start
-          </button>
+          <Button fullWidth onClick={start} disabled={disabled} icon={<Play size={16} />}>
+            Start
+          </Button>
         )}
 
         {phase === "running" && (
           <>
-            <button
-              type="button"
-              onClick={pause}
-              className={`${btn} bg-muted/40 text-foreground border border-muted`}
-            >
-              <Pause size={18} /> Pause
-            </button>
-            <button
-              type="button"
-              onClick={stop}
-              className={`${btn} bg-primary text-primary-foreground`}
-            >
-              <Square size={18} /> Stop
-            </button>
+            <Button fullWidth variant="secondary" onClick={pause} icon={<Pause size={16} />}>
+              Pause
+            </Button>
+            <Button fullWidth onClick={stop} icon={<Square size={16} />}>
+              Stop
+            </Button>
           </>
         )}
 
         {phase === "paused" && (
           <>
-            <button
-              type="button"
-              onClick={resume}
-              className={`${btn} bg-muted/40 text-foreground border border-muted`}
-            >
-              <Play size={18} /> Continue
-            </button>
-            <button
-              type="button"
-              onClick={reset}
-              className={`${btn} bg-muted/40 text-muted-foreground border border-muted`}
-            >
-              <RotateCcw size={18} /> Reset
-            </button>
-            <button
-              type="button"
-              onClick={stop}
-              className={`${btn} bg-primary text-primary-foreground`}
-            >
-              <Square size={18} /> Stop
-            </button>
+            <Button fullWidth variant="secondary" onClick={resume} icon={<Play size={16} />}>
+              Go
+            </Button>
+            <Button fullWidth variant="ghost" onClick={reset} icon={<RotateCcw size={16} />}>
+              Reset
+            </Button>
+            <Button fullWidth onClick={stop} icon={<Square size={16} />}>
+              Stop
+            </Button>
           </>
         )}
       </div>
 
       {phase !== "idle" && (
-        <p className="mt-3 text-center text-xs text-muted-foreground">
+        <p className="mt-3 text-center text-body-sm text-fg-dim">
           Stop fills the fields below, rounded to the nearest second.
         </p>
       )}

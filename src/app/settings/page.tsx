@@ -2,11 +2,12 @@ import ResetCycleButton from "@/components/ResetCycleButton";
 import WipeProgressButton from "@/components/WipeProgressButton";
 import { getCurrentUser, getWeightHistory } from "@/app/actions";
 import { redirect } from "next/navigation";
-import { User, LogOut, AlertTriangle, Shield } from "lucide-react";
+import { LogOut, TriangleAlert, Shield, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import ChangePasswordForm from "./ChangePasswordForm";
 import ProfilePictureUpload from "@/components/ProfilePictureUpload";
 import EditProfileForm from "./EditProfileForm";
+import { Card, Chip, PageTitle } from "@/components/ui";
 
 export default async function SettingsPage() {
   const user = await getCurrentUser();
@@ -18,33 +19,35 @@ export default async function SettingsPage() {
   const currentWeight = logs.length > 0 ? logs[logs.length - 1].weight : 0;
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500 pb-20">
-      <header className="flex items-center justify-between pb-2">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-accent">Settings</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            App preferences and data management
-          </p>
-        </div>
-        <form action={async () => {
-          "use server";
-          const { logout } = await import("@/app/actions");
-          await logout();
-          redirect("/login");
-        }}>
-          <button type="submit" className="p-2 bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded-full transition-colors" title="Log Out">
-            <LogOut size={20} />
-          </button>
-        </form>
-      </header>
+    <div className="space-y-5 animate-rise">
+      <PageTitle
+        title="Settings"
+        eyebrow="Preferences & data"
+        right={
+          <form action={async () => {
+            "use server";
+            const { logout } = await import("@/app/actions");
+            await logout();
+            redirect("/login");
+          }}>
+            <button
+              type="submit"
+              title="Log out"
+              className="p-2 text-fg-dim hover:text-danger hover:bg-field transition-colors"
+            >
+              <LogOut size={18} />
+            </button>
+          </form>
+        }
+      />
 
-      <ProfilePictureUpload 
-        currentUrl={user.profilePicUrl || null} 
-        email={user.email} 
+      <ProfilePictureUpload
+        currentUrl={user.profilePicUrl || null}
+        email={user.email}
         name={(user as any).name || null}
         gender={(user as any).gender || null}
-        height={user.height} 
-        weight={currentWeight} 
+        height={user.height}
+        weight={currentWeight}
       />
 
       <EditProfileForm initialName={(user as any).name as string | null} initialGender={(user as any).gender as string | null} />
@@ -54,38 +57,40 @@ export default async function SettingsPage() {
       {user.email === 'mahmoudk63@gmail.com' && (
         <Link
           href="/admin"
-          className="flex items-center justify-between bg-card border border-primary/30 p-5 rounded-2xl shadow-sm hover:border-primary/60 transition-colors group"
+          className="flex items-center justify-between gap-3 bg-panel border border-line p-4 hover:border-line-strong transition-colors"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-              <Shield size={20} className="text-primary" />
-            </div>
-            <div>
-              <p className="font-bold text-foreground text-sm">Admin Panel</p>
-              <p className="text-xs text-muted-foreground">Manage users & marketplace</p>
+          <div className="flex items-center gap-3 min-w-0">
+            <Shield size={18} className="text-fg-muted shrink-0" />
+            <div className="min-w-0">
+              <p className="text-eyebrow uppercase text-fg">Admin panel</p>
+              <p className="mt-1 text-body-sm text-fg-muted truncate">Users & marketplace</p>
             </div>
           </div>
-          <div className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-lg">Admin</div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Chip>Admin</Chip>
+            <ChevronRight size={16} className="text-fg-dim" />
+          </div>
         </Link>
       )}
 
-      <div className="bg-card border border-muted p-5 rounded-2xl shadow-sm space-y-4">
-        <div>
-          <h3 className="font-bold text-foreground">Cycle Management</h3>
-          <p className="text-xs text-muted-foreground mt-1 mb-4">
-            Resetting the cycle starts a new week of tracking. Your past data is saved in history, but your dashboard will return to a fresh state.
-          </p>
-          <ResetCycleButton />
-        </div>
-      </div>
+      <Card>
+        <p className="text-eyebrow uppercase text-fg">Cycle management</p>
+        <p className="mt-2 mb-4 text-body-sm text-fg-muted">
+          Resetting starts a new week of tracking. Past data is kept in History; the
+          dashboard returns to a fresh state.
+        </p>
+        <ResetCycleButton />
+      </Card>
 
-      <div className="bg-red-500/5 border border-red-500/20 p-5 rounded-2xl shadow-sm space-y-4">
-        <div className="flex items-center gap-2 text-red-500">
-          <AlertTriangle size={20} />
-          <h3 className="font-bold">Danger Zone</h3>
+      {/* Danger zone: the one place the danger tone is allowed to frame a whole block. */}
+      <div className="border border-danger/40 p-4">
+        <div className="flex items-center gap-2 text-danger">
+          <TriangleAlert size={16} />
+          <p className="text-eyebrow uppercase">Danger zone</p>
         </div>
-        <p className="text-xs text-muted-foreground mt-1 mb-4">
-          Permanently delete all your exercise logs, skipped days, and history. Your routines and account settings will remain, but all progress will be wiped clean.
+        <p className="mt-2 mb-4 text-body-sm text-fg-muted">
+          Permanently delete every exercise log, skipped day, and history entry.
+          Routines and account settings survive; all progress does not.
         </p>
         <WipeProgressButton />
       </div>

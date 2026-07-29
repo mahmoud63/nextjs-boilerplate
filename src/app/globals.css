@@ -1,21 +1,46 @@
 @import "tailwindcss";
 
+/* next-themes writes `class="dark"` on <html>, so the `dark:` variant has to key off
+   the class rather than the OS preference — otherwise the toggle silently does
+   nothing for any `dark:*` utility. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ============================================================================
+   "Kinetic Intensity" — Telemetry + Poster
+   Palette and type pairing borrowed from the sibling Ehab fitness project.
+   Design record: docs/superpowers/specs/2026-07-30-ui-revamp-design.md
+   ========================================================================= */
+
 @theme {
+  /* ---- Surfaces & text ------------------------------------------------- */
   --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
+  --color-panel: var(--panel);
+  --color-panel-raised: var(--panel-raised);
+  --color-field: var(--field);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-dim: var(--fg-dim);
 
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-
-  /* Brand accent. Reserved for page headers — the rest of the app stays monochrome. */
+  /* ---- Accent ----------------------------------------------------------
+     Split in two because #ccff00 is unreadable as text on a light surface:
+       --accent       text, icons, strokes. Darkens to olive in light mode.
+       --accent-fill  block fills only, always with --on-accent text on top.
+                      Stays true lime in both themes.
+     In dark mode the two are the same value. */
   --color-accent: var(--accent);
+  --color-accent-fill: var(--accent-fill);
+  --color-accent-dim: var(--accent-dim);
+  --color-on-accent: var(--on-accent);
 
-  /* "Kinetic Intensity" raw brand values — theme-independent, for the landing page
-     and anywhere the neon has to stay neon regardless of light/dark. */
+  --color-danger: var(--danger);
+  --color-danger-fill: var(--danger-fill);
+  --color-on-danger: var(--on-danger);
+
+  /* ---- Raw brand values ------------------------------------------------
+     Theme-independent, for the landing page and anywhere the neon has to stay
+     neon regardless of light/dark. Owned by welcome/ — do not theme these. */
   --color-neon-lime: #ccff00;
   --color-deep-charcoal: #0a0a0a;
   --color-surface: #131313;
@@ -24,10 +49,51 @@
   --color-surface-container-high: #2a2a2a;
   --color-on-surface-variant: #c4c9ac;
 
+  /* ---- Type ------------------------------------------------------------
+     Three voices: Anton for impact, Archivo Narrow for prose, Geist Mono for
+     every number the user reads mid-set. Mono is tabular so digits do not
+     jitter as a timer counts or a weight changes. */
   --font-sans: var(--font-archivo-narrow);
   --font-display: var(--font-anton);
   --font-mono: var(--font-geist-mono);
 
+  --text-hero-num: 64px;
+  --text-hero-num--line-height: 60px;
+  --text-hero-num--letter-spacing: 0.01em;
+  --text-hero-num--font-weight: 400;
+
+  --text-title-lg: 32px;
+  --text-title-lg--line-height: 34px;
+  --text-title-lg--letter-spacing: 0.01em;
+  --text-title-lg--font-weight: 400;
+
+  --text-title-md: 24px;
+  --text-title-md--line-height: 26px;
+  --text-title-md--letter-spacing: 0.01em;
+  --text-title-md--font-weight: 400;
+
+  --text-eyebrow: 11px;
+  --text-eyebrow--line-height: 14px;
+  --text-eyebrow--letter-spacing: 0.14em;
+  --text-eyebrow--font-weight: 700;
+
+  --text-body: 15px;
+  --text-body--line-height: 22px;
+  --text-body--font-weight: 400;
+
+  --text-body-sm: 13px;
+  --text-body-sm--line-height: 18px;
+  --text-body-sm--font-weight: 400;
+
+  --text-data: 15px;
+  --text-data--line-height: 20px;
+  --text-data--font-weight: 500;
+
+  --text-data-sm: 13px;
+  --text-data-sm--line-height: 18px;
+  --text-data-sm--font-weight: 500;
+
+  /* Landing-page scale, still used by welcome/. */
   --text-display-lg: 80px;
   --text-display-lg--line-height: 80px;
   --text-display-lg--letter-spacing: 0.02em;
@@ -38,44 +104,173 @@
   --text-label-lg: 14px;
   --text-label-lg--line-height: 20px;
   --text-label-lg--letter-spacing: 0.1em;
+
+  /* ---- Shape ------------------------------------------------------------
+     Radius 0 is the whole shape language: hard 90-degree angles everywhere.
+     Zeroing the scale rather than editing 220 `rounded-*` call sites means the
+     app goes sharp in one step. `rounded-full` is not a theme value in Tailwind,
+     so avatars stay circular — the one intended exception. */
+  --radius: 0px;
+  --radius-xs: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  --radius-4xl: 0px;
+
+  /* ---- Elevation --------------------------------------------------------
+     Depth comes from tonal surface layers plus hairlines. A drop shadow is
+     invisible against obsidian, so the scale is neutralised and the existing
+     `shadow-lg` call sites become no-ops. */
+  --shadow-2xs: none;
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-xl: none;
+  --shadow-2xl: none;
+
+  /* ---- Motion ---------------------------------------------------------- */
+  --ease-kinetic: cubic-bezier(0.2, 0, 0, 1);
+
+  --animate-breathe: breathe 2.4s var(--ease-kinetic) infinite;
+  --animate-rise: rise 0.2s var(--ease-kinetic) both;
+  --animate-seg: seg 0.32s var(--ease-kinetic) both;
+  --animate-shimmer: shimmer 1.4s linear infinite;
+
+  @keyframes breathe {
+    0%,
+    100% {
+      box-shadow: 0 0 0 1px var(--accent-fill),
+        0 0 0 0 color-mix(in srgb, var(--accent-fill) 40%, transparent);
+    }
+    50% {
+      box-shadow: 0 0 0 1px var(--accent-fill),
+        0 0 22px -4px color-mix(in srgb, var(--accent-fill) 55%, transparent);
+    }
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(2px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Segments fill from the left edge; callers stagger with animation-delay. */
+  @keyframes seg {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  @keyframes shimmer {
+    from {
+      background-position: -150% 0;
+    }
+    to {
+      background-position: 250% 0;
+    }
+  }
 }
 
 @layer base {
   :root {
-    --background: #fafafa;
-    --foreground: #09090b;
-    --card: #ffffff;
+    /* Bone, not white. The warm-neutral cast echoes lime's yellow bias so both
+       themes read as the same brand. */
+    --background: #f4f4f1;
+    --panel: #ffffff;
+    --panel-raised: #fafaf7;
+    --field: #ecece7;
+    --line: #ddddd6;
+    --line-strong: #c4c4bb;
 
-    /* Monochrome Theme - Light */
-    --primary: #000000;
-    --primary-foreground: #ffffff;
+    --fg: #131313;
+    --fg-muted: #5c5c57;
+    --fg-dim: #8a8a83;
 
-    --muted: #e4e4e7;
-    --muted-foreground: #71717a;
-
-    /* Lime is unreadable as text on a light surface, so the accent darkens here. */
+    /* Olive: lime's hue held at a luminance that passes as text on bone. */
     --accent: #556d00;
+    --accent-fill: #ccff00;
+    --accent-dim: #6e8a00;
+    --on-accent: #131313;
+
+    --danger: #93000a;
+    --danger-fill: #ffdad6;
+    --on-danger: #410002;
 
     color-scheme: light;
   }
 
   .dark {
-    --background: #09090b;
-    --foreground: #fafafa;
-    --card: #18181b;
+    --background: #0e0e0e;
+    --panel: #161616;
+    --panel-raised: #1f1f1f;
+    --field: #2a2a2a;
+    --line: #262626;
+    --line-strong: #383838;
 
-    /* Monochrome Theme - Dark */
-    --primary: #ffffff;
-    --primary-foreground: #000000;
-
-    --muted: #27272a;
-    --muted-foreground: #a1a1aa;
+    --fg: #e5e2e1;
+    --fg-muted: #8a8a87;
+    --fg-dim: #5c5c5a;
 
     --accent: #ccff00;
+    --accent-fill: #ccff00;
+    --accent-dim: #abd600;
+    --on-accent: #131313;
+
+    --danger: #ffb4ab;
+    --danger-fill: #93000a;
+    --on-danger: #ffdad6;
 
     color-scheme: dark;
   }
 }
+
+/* ---- Utilities ----------------------------------------------------------- */
+
+/* Every number that changes in place — timers, weights, set counts. */
+@utility tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* The one technical flourish: a 45-degree cut on the top-right corner. Budgeted
+   at one element per screen, on the hero panel. */
+@utility chamfer {
+  clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%);
+}
+
+@utility chamfer-lg {
+  clip-path: polygon(0 0, calc(100% - 32px) 0, 100% 32px, 100% 100%, 0 100%);
+}
+
+/* Stands in for a drop shadow on active/electrified elements. */
+@utility glow-accent {
+  box-shadow: 0 0 0 1px var(--accent-fill),
+    0 0 28px -6px color-mix(in srgb, var(--accent-fill) 55%, transparent);
+}
+
+/* BottomNav has always asked for this class; it was never defined, so the nav
+   sat under the iOS home indicator. */
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* ---- Element defaults --------------------------------------------------- */
 
 body {
   background: var(--color-background);
@@ -94,21 +289,44 @@ h3 {
   letter-spacing: 0.02em;
 }
 
-/* ---- Rich text: Quill editor chrome + rendered output ---------------------- */
+/* Sharp geometry leaves no soft edge to read focus off, so the ring carries it. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--accent-fill);
+  color: var(--on-accent);
+}
+
+/* The app is mostly number inputs. Native spinners are rounded, low-contrast, and
+   a fat-finger hazard next to a 44px submit button. */
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* ---- Rich text: Quill editor chrome + rendered output --------------------- */
 
 .rich-text-editor {
-  border: 1px solid var(--muted);
-  border-radius: 0.75rem;
+  border: 1px solid var(--line);
   overflow: hidden;
   background: var(--background);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s var(--ease-kinetic),
+    box-shadow 0.15s var(--ease-kinetic);
 }
 
 /* Quill has no focus hook of its own; :focus-within on the shell gives the whole
    field the same focus treatment as the plain inputs next to it. */
 .rich-text-editor:focus-within {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
 .rich-text-editor .ql-toolbar.ql-snow,
@@ -126,8 +344,8 @@ h3 {
   flex-wrap: wrap;
   gap: 0.15rem;
   align-items: center;
-  background: var(--card);
-  border-bottom: 1px solid var(--muted) !important;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line) !important;
 }
 
 /* Snow ships its own float-based grouping, which wraps badly on a phone. */
@@ -140,7 +358,7 @@ h3 {
 .rich-text-editor .ql-toolbar.ql-snow .ql-formats + .ql-formats {
   margin-left: 0.35rem;
   padding-left: 0.45rem;
-  border-left: 1px solid var(--muted);
+  border-left: 1px solid var(--line);
 }
 
 .rich-text-editor .ql-snow.ql-toolbar button,
@@ -148,8 +366,7 @@ h3 {
   width: 30px;
   height: 30px;
   padding: 5px;
-  border-radius: 0.375rem;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s var(--ease-kinetic);
 }
 .rich-text-editor .ql-snow.ql-toolbar .ql-picker-label {
   width: auto;
@@ -159,11 +376,11 @@ h3 {
 }
 .rich-text-editor .ql-snow.ql-toolbar button:hover,
 .rich-text-editor .ql-snow.ql-toolbar .ql-picker-label:hover {
-  background: var(--muted);
+  background: var(--field);
 }
 .rich-text-editor .ql-snow.ql-toolbar button.ql-active,
 .rich-text-editor .ql-snow.ql-toolbar .ql-picker-label.ql-active {
-  background: color-mix(in srgb, var(--primary) 18%, transparent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .rich-text-editor .ql-container.ql-snow {
@@ -176,67 +393,61 @@ h3 {
   max-height: 22rem;
   overflow-y: auto;
   padding: 1rem;
-  color: var(--foreground);
+  color: var(--fg);
   line-height: 1.6;
 }
 
 .rich-text-editor .ql-editor.ql-blank::before {
-  color: var(--muted-foreground);
+  color: var(--fg-dim);
   font-style: normal;
   left: 1rem;
   right: 1rem;
 }
 
 /* Snow's toolbar icons are hardcoded dark; retint them for the active theme. */
-.rich-text-editor .ql-snow .ql-stroke { stroke: var(--muted-foreground); }
-.rich-text-editor .ql-snow .ql-fill { fill: var(--muted-foreground); }
-.rich-text-editor .ql-snow .ql-picker-label { color: var(--muted-foreground); }
+.rich-text-editor .ql-snow .ql-stroke { stroke: var(--fg-muted); }
+.rich-text-editor .ql-snow .ql-fill { fill: var(--fg-muted); }
+.rich-text-editor .ql-snow .ql-picker-label { color: var(--fg-muted); }
 .rich-text-editor .ql-snow.ql-toolbar button:hover .ql-stroke,
 .rich-text-editor .ql-snow.ql-toolbar button.ql-active .ql-stroke,
 .rich-text-editor .ql-snow .ql-picker-label:hover .ql-stroke,
-.rich-text-editor .ql-snow .ql-picker-label.ql-active .ql-stroke { stroke: var(--primary); }
+.rich-text-editor .ql-snow .ql-picker-label.ql-active .ql-stroke { stroke: var(--accent); }
 .rich-text-editor .ql-snow.ql-toolbar button:hover .ql-fill,
-.rich-text-editor .ql-snow.ql-toolbar button.ql-active .ql-fill { fill: var(--primary); }
+.rich-text-editor .ql-snow.ql-toolbar button.ql-active .ql-fill { fill: var(--accent); }
 .rich-text-editor .ql-snow.ql-toolbar button:hover,
 .rich-text-editor .ql-snow .ql-picker-label:hover,
-.rich-text-editor .ql-snow .ql-picker-label.ql-active { color: var(--primary); }
+.rich-text-editor .ql-snow .ql-picker-label.ql-active { color: var(--accent); }
 
 .rich-text-editor .ql-snow .ql-picker-options {
-  background: var(--card);
-  border: 1px solid var(--muted);
-  border-radius: 0.5rem;
+  background: var(--panel-raised);
+  border: 1px solid var(--line-strong);
   padding: 0.35rem;
-  color: var(--foreground);
-  box-shadow: 0 12px 32px rgb(0 0 0 / 0.35);
+  color: var(--fg);
 }
 .rich-text-editor .ql-snow .ql-picker-item {
-  border-radius: 0.3rem;
   padding: 0.25rem 0.5rem;
-  color: var(--foreground);
+  color: var(--fg);
 }
 .rich-text-editor .ql-snow .ql-picker-item:hover,
-.rich-text-editor .ql-snow .ql-picker-item.ql-selected { color: var(--primary); }
+.rich-text-editor .ql-snow .ql-picker-item.ql-selected { color: var(--accent); }
 
 /* The link popover is unstyled by default and renders as a white box. */
 .rich-text-editor .ql-snow .ql-tooltip {
-  background: var(--card);
-  border: 1px solid var(--muted);
-  border-radius: 0.5rem;
-  box-shadow: 0 12px 32px rgb(0 0 0 / 0.35);
-  color: var(--foreground);
+  background: var(--panel-raised);
+  border: 1px solid var(--line-strong);
+  color: var(--fg);
   padding: 0.5rem 0.75rem;
   /* Snow hard-codes a negative offset that pushes this off-screen in a modal. */
   left: 0.5rem !important;
 }
 .rich-text-editor .ql-snow .ql-tooltip input[type="text"] {
-  background: var(--background);
-  border: 1px solid var(--muted);
-  border-radius: 0.375rem;
-  color: var(--foreground);
+  background: var(--field);
+  border: 1px solid var(--line-strong);
+  color: var(--fg);
   padding: 0.3rem 0.5rem;
 }
 .rich-text-editor .ql-snow .ql-tooltip a.ql-action,
-.rich-text-editor .ql-snow .ql-tooltip a.ql-remove { color: var(--primary); }
+.rich-text-editor .ql-snow .ql-tooltip a.ql-remove { color: var(--accent); }
 
 /* Live preview inside the editor, so the author sees the real hierarchy. */
 .rich-text-editor .ql-editor h2 {
@@ -248,19 +459,19 @@ h3 {
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--primary);
+  color: var(--accent);
   margin: 1rem 0 0.35rem;
 }
 .rich-text-editor .ql-editor h2:first-child,
 .rich-text-editor .ql-editor h3:first-child { margin-top: 0; }
 .rich-text-editor .ql-editor p { margin-bottom: 0.5rem; }
 .rich-text-editor .ql-editor blockquote {
-  border-left: 3px solid var(--primary);
+  border-left: 2px solid var(--accent);
   padding-left: 0.75rem;
   margin: 0.6rem 0;
-  color: var(--muted-foreground);
+  color: var(--fg-muted);
 }
-.rich-text-editor .ql-editor a { color: var(--primary); }
+.rich-text-editor .ql-editor a { color: var(--accent); }
 
 .rich-text :where(h2) { font-size: 1rem; font-weight: 700; margin: 0.85rem 0 0.35rem; }
 .rich-text :where(h3) {
@@ -274,8 +485,28 @@ h3 {
 .rich-text :where(ol) { list-style: decimal; padding-left: 1.15rem; margin: 0 0 0.5rem; }
 .rich-text :where(li) { margin: 0.15rem 0; }
 .rich-text :where(blockquote) {
-  border-left: 2px solid var(--muted-foreground);
+  border-left: 2px solid var(--line-strong);
   padding-left: 0.75rem; margin: 0.5rem 0; opacity: 0.85;
 }
-.rich-text :where(a) { color: var(--primary); text-decoration: underline; }
+.rich-text :where(a) { color: var(--accent); text-decoration: underline; }
 .rich-text :where(strong) { font-weight: 700; }
+
+/* ---- Reduced motion ------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* The breathe keyframe is the sole cue for "this is the active set", so it has
+     to survive as a static state rather than vanish. */
+  .animate-breathe {
+    animation: none !important;
+    box-shadow: 0 0 0 1px var(--accent-fill) !important;
+  }
+}

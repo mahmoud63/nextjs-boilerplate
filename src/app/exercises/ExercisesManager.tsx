@@ -169,42 +169,42 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
     }));
   };
 
-  const inputClass = "w-full bg-background border border-muted rounded-lg p-2 text-sm";
-  const labelClass = "text-xs font-bold text-muted-foreground block mb-1";
+  const inputClass = "w-full bg-background border border-line p-2 text-sm";
+  const labelClass = "text-xs font-bold text-fg-muted block mb-1";
 
   return (
     <div className="space-y-6 pb-20">
 
       {isPending && (
         <div className="fixed inset-0 bg-background/50 backdrop-blur-sm z-[100] flex items-center justify-center">
-          <Loader2 className="animate-spin text-primary w-10 h-10" />
+          <Loader2 className="animate-spin text-accent w-10 h-10" />
         </div>
       )}
 
       <div className="space-y-4">
         <button
           onClick={openNew}
-          className="w-full bg-primary/10 text-primary py-4 rounded-xl border border-primary/20 font-bold flex items-center justify-center gap-2 hover:bg-primary/20 transition-colors"
+          className="w-full bg-field text-accent py-4 border border-line font-bold flex items-center justify-center gap-2 hover:bg-field transition-colors"
         >
           <Plus size={18} /> Create New Exercise
         </button>
 
         <div className="space-y-3">
           {initialExercises.map(ex => (
-            <div key={ex.id} className="bg-card border border-muted p-4 rounded-xl flex items-start justify-between group">
+            <div key={ex.id} className="bg-panel border border-line p-4 flex items-start justify-between group">
               <div>
                 <div className="flex items-center gap-3">
-                  {ex.imageUrl && <img src={`/api/blob?url=${encodeURIComponent(ex.imageUrl)}`} alt={ex.name} className="w-12 h-12 object-cover rounded-xl bg-black/50 border border-muted" />}
+                  {ex.imageUrl && <img src={`/api/blob?url=${encodeURIComponent(ex.imageUrl)}`} alt={ex.name} className="w-12 h-12 object-cover bg-black/50 border border-line" />}
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-bold text-foreground">{ex.name}</h3>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">
+                      <h3 className="font-bold text-fg">{ex.name}</h3>
+                      <span className="text-eyebrow uppercase text-fg-muted bg-field px-1.5 py-0.5 rounded">
                         {TYPE_LABELS[normalizeType(ex.type)]}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">{ex.sets} sets × {ex.reps} • {ex.targetMuscle}</p>
+                    <p className="text-xs text-fg-muted mt-1">{ex.sets} sets × {ex.reps} • {ex.targetMuscle}</p>
                     {(ex.targetWeight || ex.rpe) && (
-                      <p className="text-xs text-primary/70 mt-0.5">
+                      <p className="text-xs text-fg-muted mt-0.5">
                         {[ex.targetWeight, ex.rpe && `RPE ${ex.rpe}`].filter(Boolean).join(" • ")}
                       </p>
                     )}
@@ -214,13 +214,13 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
               <div className="flex gap-2">
                 <button
                   onClick={() => openEdit(ex)}
-                  className="p-2 text-muted-foreground hover:text-primary transition-colors"
+                  className="p-2 text-fg-muted hover:text-accent transition-colors"
                 >
                   <Edit2 size={16} />
                 </button>
                 <button
                   onClick={() => setDeleteConfirmId(ex.id)}
-                  className="p-2 text-muted-foreground hover:text-red-500 transition-colors"
+                  className="p-2 text-fg-muted hover:text-danger transition-colors"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -232,8 +232,8 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
         {/* EXERCISE MODAL */}
         {showExModal && (
           <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex justify-center items-end sm:items-center p-4">
-            <div className="bg-card w-full max-w-md rounded-2xl border border-muted shadow-2xl overflow-hidden animate-in slide-in-from-bottom-8 duration-300 max-h-[90vh] flex flex-col">
-              <div className="p-4 border-b border-muted font-bold text-lg shrink-0">
+            <div className="bg-panel w-full max-w-md border border-line overflow-hidden animate-rise duration-300 max-h-[90vh] flex flex-col">
+              <div className="p-4 border-b border-line font-bold text-lg shrink-0">
                 {editingEx ? "Edit Exercise" : "New Exercise"}
               </div>
               <div className="p-4 space-y-4 overflow-y-auto">
@@ -250,17 +250,17 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
                         key={t}
                         type="button"
                         onClick={() => setExForm({...exForm, type: t})}
-                        className={`py-2 px-3 rounded-lg text-sm font-bold border transition-colors ${
+                        className={`py-2 px-3 text-sm font-bold border transition-colors ${
                           exForm.type === t
-                            ? "bg-primary/15 border-primary/40 text-primary"
-                            : "bg-background border-muted text-muted-foreground hover:bg-muted/40"
+                            ? "bg-accent-fill/15 border-accent/40 text-accent"
+                            : "bg-background border-line text-fg-muted hover:bg-field"
                         }`}
                       >
                         {TYPE_LABELS[t]}
                       </button>
                     ))}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">{TYPE_HINTS[exForm.type]}</p>
+                  <p className="text-xs text-fg-muted mt-2">{TYPE_HINTS[exForm.type]}</p>
                 </div>
 
                 <div className="flex gap-4">
@@ -299,7 +299,7 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
                 </div>
 
                 {/* DEMO VIDEO */}
-                <div className="border-t border-muted pt-4">
+                <div className="border-t border-line pt-4">
                   <label className={labelClass}>Demo Video</label>
                   <input
                     type="url"
@@ -308,17 +308,17 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
                     placeholder="YouTube link or direct .mp4 / .gif URL"
                     className={inputClass}
                   />
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-fg-muted mt-1">
                     YouTube links and direct video files play inside the app. Other pages (MuscleWiki, etc.) can only open in a browser tab.
                   </p>
-                  <label className="mt-2 inline-flex items-center gap-2 text-xs font-bold text-primary bg-primary/10 border border-primary/20 rounded-lg px-3 py-2 cursor-pointer hover:bg-primary/20 transition-colors">
+                  <label className="mt-2 inline-flex items-center gap-2 text-xs font-bold text-accent bg-field border border-line px-3 py-2 cursor-pointer hover:bg-field transition-colors">
                     <Film size={14} /> Upload a clip (max 50MB)
                     <input type="file" accept="video/*" className="hidden" onChange={handleVideoUpload} disabled={isUploading || isPending} />
                   </label>
                   {exForm.videoUrl && (
                     <div className="mt-2">
                       <ExerciseMedia videoUrl={exForm.videoUrl} imageUrl={null} name={exForm.name || "Preview"} />
-                      <button type="button" onClick={() => setExForm({...exForm, videoUrl: ""})} className="mt-2 text-xs font-semibold text-red-500 hover:underline">
+                      <button type="button" onClick={() => setExForm({...exForm, videoUrl: ""})} className="mt-2 text-xs font-semibold text-danger hover:underline">
                         Remove video
                       </button>
                     </div>
@@ -326,7 +326,7 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
                 </div>
 
                 {/* REFERENCE LINKS */}
-                <div className="border-t border-muted pt-4">
+                <div className="border-t border-line pt-4">
                   <label className={labelClass}>Reference Links</label>
                   <div className="space-y-2">
                     {exForm.refLinks.map((ref, idx) => (
@@ -336,7 +336,7 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
                           value={ref.label}
                           onChange={e => updateRefLink(idx, { label: e.target.value })}
                           placeholder="Label"
-                          className="w-28 bg-background border border-muted rounded-lg p-2 text-sm shrink-0"
+                          className="w-28 bg-background border border-line p-2 text-sm shrink-0"
                         />
                         <input
                           type="url"
@@ -348,7 +348,7 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
                         <button
                           type="button"
                           onClick={() => setExForm(f => ({ ...f, refLinks: f.refLinks.filter((_, i) => i !== idx) }))}
-                          className="p-2 text-muted-foreground hover:text-red-500 transition-colors shrink-0"
+                          className="p-2 text-fg-muted hover:text-danger transition-colors shrink-0"
                         >
                           <X size={16} />
                         </button>
@@ -358,17 +358,17 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
                   <button
                     type="button"
                     onClick={() => setExForm(f => ({ ...f, refLinks: [...f.refLinks, { label: "", url: "" }] }))}
-                    className="mt-2 inline-flex items-center gap-2 text-xs font-bold text-primary hover:underline"
+                    className="mt-2 inline-flex items-center gap-2 text-xs font-bold text-accent hover:underline"
                   >
                     <LinkIcon size={14} /> Add reference link
                   </button>
                 </div>
 
                 {/* STILL IMAGE */}
-                <div className="border-t border-muted pt-4">
-                  <label className="text-xs font-bold text-muted-foreground block mb-2">Exercise Image</label>
+                <div className="border-t border-line pt-4">
+                  <label className="text-xs font-bold text-fg-muted block mb-2">Exercise Image</label>
                   {previewUrl || exForm.imageUrl ? (
-                    <div className="relative w-full h-40 rounded-xl overflow-hidden bg-muted group border border-muted">
+                    <div className="relative w-full h-40 overflow-hidden bg-field group border border-line">
                       <img src={previewUrl || `/api/blob?url=${encodeURIComponent(exForm.imageUrl)}`} alt="Exercise" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6">
                         <label className="cursor-pointer text-white flex flex-col items-center hover:scale-110 transition-transform">
@@ -376,37 +376,37 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
                           <span className="text-xs mt-1 font-bold">Change</span>
                           <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading || isPending} />
                         </label>
-                        <button onClick={() => { setExForm({...exForm, imageUrl: ""}); setSelectedFile(null); setPreviewUrl(null); }} type="button" className="text-red-400 flex flex-col items-center hover:scale-110 transition-transform">
+                        <button onClick={() => { setExForm({...exForm, imageUrl: ""}); setSelectedFile(null); setPreviewUrl(null); }} type="button" className="text-danger flex flex-col items-center hover:scale-110 transition-transform">
                           <Trash2 size={24} />
                           <span className="text-xs mt-1 font-bold">Remove</span>
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-muted-foreground/30 rounded-xl cursor-pointer hover:bg-muted/10 transition-colors">
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-line-foreground/30 cursor-pointer hover:bg-field/10 transition-colors">
                       {isUploading ? (
                         <div className="flex flex-col items-center">
-                          <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
-                          <span className="text-sm font-semibold text-primary">
+                          <Loader2 className="w-8 h-8 text-accent animate-spin mb-2" />
+                          <span className="text-sm font-semibold text-accent">
                             {uploadProgress !== null ? `Uploading ${uploadProgress}%` : "Uploading..."}
                           </span>
                         </div>
                       ) : (
                         <div className="flex flex-col items-center">
-                          <ImageIcon className="w-8 h-8 text-muted-foreground mb-2" />
-                          <span className="text-sm font-semibold text-muted-foreground">Upload Image</span>
-                          <span className="text-xs text-muted-foreground/70 mt-1">Max 5MB</span>
+                          <ImageIcon className="w-8 h-8 text-fg-muted mb-2" />
+                          <span className="text-sm font-semibold text-fg-muted">Upload Image</span>
+                          <span className="text-xs text-fg-dim mt-1">Max 5MB</span>
                         </div>
                       )}
                       <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading || isPending} />
                     </label>
                   )}
-                  {uploadError && <p className="text-red-500 text-xs mt-2 font-semibold">{uploadError}</p>}
+                  {uploadError && <p className="text-danger text-xs mt-2 font-semibold">{uploadError}</p>}
                 </div>
               </div>
-              <div className="p-4 border-t border-muted flex gap-3 bg-muted/20 shrink-0">
-                <button onClick={() => { setShowExModal(false); setSelectedFile(null); setPreviewUrl(null); }} className="flex-1 py-2 rounded-xl font-semibold text-muted-foreground hover:bg-muted transition-colors">Cancel</button>
-                <button onClick={handleSaveExercise} disabled={!exForm.name || !exForm.targetMuscle || isUploading} className="flex-1 py-2 rounded-xl font-bold bg-foreground text-background disabled:opacity-50">
+              <div className="p-4 border-t border-line flex gap-3 bg-field shrink-0">
+                <button onClick={() => { setShowExModal(false); setSelectedFile(null); setPreviewUrl(null); }} className="flex-1 py-2 font-semibold text-fg-muted hover:bg-field transition-colors">Cancel</button>
+                <button onClick={handleSaveExercise} disabled={!exForm.name || !exForm.targetMuscle || isUploading} className="flex-1 py-2 font-bold bg-accent-fill text-on-accent disabled:opacity-50">
                   {isUploading ? (uploadProgress !== null ? `${uploadProgress}%` : "Saving...") : "Save"}
                 </button>
               </div>

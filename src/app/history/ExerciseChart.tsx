@@ -3,7 +3,16 @@
 import { useEffect, useState } from "react";
 import { getExerciseHistory } from "@/app/actions";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
+import { EmptyState, StatBlock, StatRow } from "@/components/ui";
+import {
+  chartMargin,
+  gridProps,
+  lineProps,
+  tooltipProps,
+  xAxisProps,
+  yAxisProps,
+} from "@/lib/chartTheme";
 
 export default function ExerciseChart({ exerciseName }: { exerciseName: string }) {
   const [data, setData] = useState<any[]>([]);
@@ -44,49 +53,48 @@ export default function ExerciseChart({ exerciseName }: { exerciseName: string }
   }, [exerciseName]);
 
   if (loading) {
-    return <div className="h-48 flex items-center justify-center"><Loader2 className="animate-spin text-muted-foreground" /></div>;
+    return (
+      <div className="h-56 flex items-center justify-center">
+        <LoaderCircle className="animate-spin text-fg-dim" />
+      </div>
+    );
   }
 
   if (data.length === 0) {
-    return <div className="h-48 flex items-center justify-center text-muted-foreground text-sm font-medium">No data found for this exercise.</div>;
+    return <EmptyState title="No data" message="Nothing logged for this exercise yet." />;
   }
 
+  const best = Math.max(...data.map((d) => d.maxWeight));
+  const latest = data[data.length - 1].maxWeight;
+  const previous = data.length > 1 ? data[data.length - 2].maxWeight : undefined;
+
   return (
-    <div className="h-64 w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="opacity-10" vertical={false} />
-          <XAxis 
-            dataKey="date" 
-            stroke="currentColor" 
-            className="text-xs opacity-50" 
-            tickMargin={10} 
-            axisLine={false} 
-            tickLine={false} 
-          />
-          <YAxis 
-            stroke="currentColor" 
-            className="text-xs opacity-50" 
-            axisLine={false} 
-            tickLine={false} 
-          />
-          <Tooltip 
-            // The theme tokens are hex, not HSL triplets — hsl(var(--card)) never resolved.
-            contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--muted)', borderRadius: '12px' }}
-            itemStyle={{ color: 'var(--primary)', fontWeight: 'bold' }}
-            labelStyle={{ color: 'var(--muted-foreground)', marginBottom: '4px' }}
-            formatter={(value: any) => [`${value} kg`, "Max Weight"]}
-          />
-          <Line
-            type="monotone"
-            dataKey="maxWeight"
-            stroke="var(--primary)"
-            strokeWidth={3}
-            dot={{ fill: 'var(--primary)', strokeWidth: 2, r: 4 }}
-            activeDot={{ r: 6, fill: 'var(--foreground)' }}
-          />
-        </LineChart>
-      </ResponsiveContainer>
+    <div className="border border-line">
+      <StatRow>
+        <StatBlock
+          label="Latest"
+          value={latest}
+          unit="kg"
+          delta={previous !== undefined ? Number((latest - previous).toFixed(1)) : undefined}
+        />
+        <StatBlock label="Best" value={best} unit="kg" />
+        <StatBlock label="Sessions" value={data.length} />
+      </StatRow>
+
+      <div className="h-56 w-full bg-panel border-t border-line p-3 pl-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data} margin={chartMargin}>
+            <CartesianGrid {...gridProps} />
+            <XAxis dataKey="date" {...xAxisProps} />
+            <YAxis {...yAxisProps} />
+            <Tooltip
+              {...tooltipProps}
+              formatter={(value: any) => [`${value} kg`, "Max weight"]}
+            />
+            <Line dataKey="maxWeight" {...lineProps} />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }

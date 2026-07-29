@@ -2,16 +2,17 @@
 
 import { useState, useTransition } from "react";
 import { uploadImage, updateProfilePicture } from "@/app/actions";
-import { User, Loader2, Camera } from "lucide-react";
+import { User, LoaderCircle, Camera } from "lucide-react";
+import { StatBlock, StatRow } from "@/components/ui";
 
-export default function ProfilePictureUpload({ 
-  currentUrl, 
+export default function ProfilePictureUpload({
+  currentUrl,
   email,
   name,
   gender,
-  height, 
-  weight 
-}: { 
+  height,
+  weight
+}: {
   currentUrl: string | null;
   email: string;
   name: string | null;
@@ -49,33 +50,61 @@ export default function ProfilePictureUpload({
   };
 
   return (
-    <div className="bg-card border border-muted p-5 rounded-2xl shadow-sm flex flex-col sm:flex-row items-center gap-4 relative">
-      <div className="relative group shrink-0">
-        <div className="w-20 h-20 rounded-full bg-primary/20 text-primary flex items-center justify-center border-2 border-primary/30 overflow-hidden relative">
-          {currentUrl ? (
-            <img src={`/api/blob?url=${encodeURIComponent(currentUrl)}`} alt="Profile" className="w-full h-full object-cover" />
-          ) : (
-            <User size={32} />
-          )}
-          
-          <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-            {isPending ? (
-              <Loader2 className="animate-spin text-white w-6 h-6" />
+    <div className="border border-line">
+      <div className="bg-panel p-4 flex items-center gap-4">
+        {/* The avatar keeps its circle — the single intentional exception to radius 0. */}
+        <label className="relative group shrink-0 cursor-pointer">
+          <span className="block w-16 h-16 rounded-full bg-field text-fg-dim overflow-hidden border border-line-strong">
+            {currentUrl ? (
+              <img
+                src={`/api/blob?url=${encodeURIComponent(currentUrl)}`}
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
             ) : (
-              <Camera className="text-white w-6 h-6" />
+              <span className="w-full h-full flex items-center justify-center">
+                <User size={26} />
+              </span>
             )}
-            <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={isPending} />
-          </label>
+          </span>
+          <span className="absolute inset-0 rounded-full bg-black/65 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            {isPending ? (
+              <LoaderCircle className="animate-spin text-accent w-5 h-5" />
+            ) : (
+              <Camera className="text-accent w-5 h-5" />
+            )}
+          </span>
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleUpload}
+            disabled={isPending}
+          />
+        </label>
+
+        <div className="min-w-0">
+          <p className="font-display text-title-md uppercase text-fg truncate">
+            {name || email}
+          </p>
+          <p className="mt-0.5 font-mono text-data-sm text-fg-dim truncate">{email}</p>
+          {error && <p className="mt-1.5 text-body-sm text-danger">{error}</p>}
+          <p className="mt-1.5 text-body-sm text-fg-dim sm:hidden">
+            Tap image to change (max 3MB)
+          </p>
         </div>
       </div>
-      
-      <div className="text-center sm:text-left">
-        <h2 className="text-xl font-black text-foreground">{name || email}</h2>
-        <p className="text-sm text-muted-foreground font-medium mt-1">
-          {gender ? `${gender.charAt(0).toUpperCase() + gender.slice(1)} • ` : ''}Height: {height} cm • Weight: {weight ? `${weight} kg` : 'N/A'}
-        </p>
-        {error && <p className="text-red-500 text-xs mt-2 font-semibold">{error}</p>}
-        <p className="text-[10px] text-muted-foreground mt-2 sm:hidden">Tap image to change (Max 3MB)</p>
+
+      <div className="border-t border-line">
+        <StatRow>
+          <StatBlock label="Height" value={height || "—"} unit={height ? "cm" : undefined} />
+          <StatBlock label="Weight" value={weight || "—"} unit={weight ? "kg" : undefined} />
+          <StatBlock
+            label="Gender"
+            value={gender ? gender.charAt(0).toUpperCase() + gender.slice(1) : "—"}
+            size="sm"
+          />
+        </StatRow>
       </div>
     </div>
   );

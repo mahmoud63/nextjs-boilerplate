@@ -7,6 +7,16 @@ import { Loader2, Plus, TrendingDown, TrendingUp, Scale, Calendar, ChevronDown, 
 
 import ExerciseChart from "./ExerciseChart";
 import { describeSetLoose, type SetLog } from "@/lib/exerciseTypes";
+import { Button, Card, Field, PageTitle, StatBlock, StatRow } from "@/components/ui";
+import {
+  chartMargin,
+  CHART_COLORS,
+  gridProps,
+  lineProps,
+  tooltipProps,
+  xAxisProps,
+  yAxisProps,
+} from "@/lib/chartTheme";
 
 type WeightLog = {
   id: string;
@@ -132,112 +142,68 @@ export default function HistoryManager({
   const bmi = latestWeight > 0 && heightM > 0 ? (latestWeight / (heightM * heightM)).toFixed(1) : "0";
 
   return (
-    <div className="space-y-6 pb-20">
-      <header className="flex items-center justify-between pb-2">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-accent">History</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Track your weight and progress
-          </p>
-        </div>
-      </header>
+    <div className="space-y-5">
+      <PageTitle title="History" eyebrow="Weight & progress" />
 
-      {/* Cycle Stats */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-card border border-muted p-4 rounded-2xl shadow-sm text-center">
-          <p className="text-xs font-bold text-muted-foreground mb-1 uppercase tracking-wider">Days Completed</p>
-          <p className="text-3xl font-black text-foreground">{cycleStats.completed}</p>
-        </div>
-        <div className="bg-card border border-muted p-4 rounded-2xl shadow-sm text-center">
-          <p className="text-xs font-bold text-muted-foreground mb-1 uppercase tracking-wider">Days Skipped</p>
-          <p className="text-3xl font-black text-muted-foreground">{cycleStats.skipped}</p>
+      {/* Body metrics as one instrument cluster rather than four separate cards. */}
+      <div className="border border-line">
+        <StatRow>
+          <StatBlock
+            label="Weight"
+            value={latestWeight > 0 ? latestWeight.toFixed(1) : "0"}
+            unit="kg"
+            delta={diff !== 0 ? Number(diff.toFixed(1)) : undefined}
+            higherIsBetter={false}
+          />
+          <StatBlock label="BMI" value={bmi} />
+          <StatBlock label="Height" value={userHeight || "0"} unit="cm" />
+        </StatRow>
+        <div className="border-t border-line">
+          <StatRow>
+            <StatBlock label="Days done" value={cycleStats.completed} />
+            <StatBlock label="Days skipped" value={cycleStats.skipped} />
+            <StatBlock label="Logs" value={initialLogs.length} />
+          </StatRow>
         </div>
       </div>
 
       {/* Weight Input Card */}
-      <div className="bg-card border border-muted p-5 rounded-2xl shadow-sm">
-        <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
-          <Scale size={18} className="text-primary" /> Log New Weight
-        </h3>
-        <form onSubmit={handleLogWeight} className="flex gap-2">
-          <input 
-            type="number" 
+      <Card>
+        <p className="flex items-center gap-2 text-eyebrow uppercase text-fg">
+          <Scale size={14} className="text-fg-dim" /> Log new weight
+        </p>
+        <form onSubmit={handleLogWeight} className="mt-4 flex items-end gap-2">
+          <Field
+            label="Weight"
+            suffix="kg"
+            numeric
+            inputMode="decimal"
+            type="number"
             step="0.1"
             value={weight}
             onChange={e => setWeight(e.target.value)}
-            placeholder="e.g. 85.5"
-            className="flex-1 min-w-0 bg-background border border-muted rounded-xl p-3 font-semibold focus:border-primary transition-colors"
+            placeholder="85.5"
+            wrapperClassName="flex-1 min-w-0"
           />
-          <button 
-            type="submit" 
-            disabled={isPending || !weight}
-            className="bg-foreground text-background px-4 shrink-0 rounded-xl font-bold disabled:opacity-50 flex items-center justify-center gap-1"
-          >
-            {isPending ? <Loader2 size={18} className="animate-spin" /> : <><Plus size={18} /> Add</>}
-          </button>
+          <Button type="submit" disabled={!weight} loading={isPending} icon={<Plus size={16} />}>
+            Add
+          </Button>
         </form>
-        {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-card border border-muted p-4 rounded-2xl shadow-sm">
-          <p className="text-xs font-bold text-muted-foreground mb-1 uppercase tracking-wider">Current Weight</p>
-          <div className="flex items-end gap-2">
-            <span className="text-3xl font-black text-foreground">{latestWeight.toFixed(1)} <span className="text-lg text-muted-foreground font-semibold">kg</span></span>
-          </div>
-          {diff !== 0 && (
-            <p className={`text-xs mt-2 flex items-center gap-1 font-bold ${diff > 0 ? "text-red-500" : "text-green-500"}`}>
-              {diff > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />} 
-              {Math.abs(diff).toFixed(1)} kg since last log
-            </p>
-          )}
-        </div>
-        <div className="bg-card border border-muted p-4 rounded-2xl shadow-sm">
-          <p className="text-xs font-bold text-muted-foreground mb-1 uppercase tracking-wider">Current BMI</p>
-          <div className="flex items-end gap-2">
-            <span className="text-3xl font-black text-foreground">{bmi}</span>
-          </div>
-          <p className="text-xs text-muted-foreground mt-2 font-medium">Height: {userHeight} cm</p>
-        </div>
-      </div>
+        {error && <p className="mt-2 text-body-sm text-danger">{error}</p>}
+      </Card>
 
       {/* Chart */}
       {chartData.length > 0 && (
-        <div className="bg-card border border-muted p-4 rounded-2xl shadow-sm">
-          <h3 className="font-bold text-foreground mb-6">Weight Trend</h3>
-          <div className="h-64 w-full">
+        <div className="border border-line bg-panel">
+          <p className="p-4 pb-0 text-eyebrow uppercase text-fg-dim">Weight trend</p>
+          <div className="h-60 w-full p-3 pl-0">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="opacity-10" vertical={false} />
-                <XAxis 
-                  dataKey="displayDate" 
-                  stroke="currentColor" 
-                  className="text-xs opacity-50" 
-                  tickMargin={10} 
-                  axisLine={false} 
-                  tickLine={false} 
-                />
-                <YAxis 
-                  domain={['dataMin - 2', 'dataMax + 2']} 
-                  stroke="currentColor" 
-                  className="text-xs opacity-50" 
-                  axisLine={false} 
-                  tickLine={false} 
-                />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--muted)', borderRadius: '12px' }}
-                  itemStyle={{ color: 'var(--primary)', fontWeight: 'bold' }}
-                  labelStyle={{ color: 'var(--muted-foreground)', marginBottom: '4px' }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="weight"
-                  stroke="var(--primary)"
-                  strokeWidth={3}
-                  dot={{ fill: 'var(--primary)', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, fill: 'var(--foreground)' }}
-                />
+              <LineChart data={chartData} margin={chartMargin}>
+                <CartesianGrid {...gridProps} />
+                <XAxis dataKey="displayDate" {...xAxisProps} />
+                <YAxis domain={['dataMin - 2', 'dataMax + 2']} {...yAxisProps} />
+                <Tooltip {...tooltipProps} />
+                <Line dataKey="weight" {...lineProps} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -246,13 +212,13 @@ export default function HistoryManager({
 
       {/* Exercise Selection & Chart */}
       {exercises.length > 0 && (
-        <div className="bg-card border border-muted p-5 rounded-2xl shadow-sm">
+        <div className="bg-panel border border-line p-5">
           <div className="flex flex-col mb-4">
-            <h3 className="font-bold text-foreground mb-2">Exercise Progress</h3>
+            <h3 className="font-bold text-fg mb-2">Exercise Progress</h3>
             <select 
               value={selectedExercise} 
               onChange={(e) => setSelectedExercise(e.target.value)}
-              className="bg-background border border-muted rounded-xl p-2 font-semibold text-sm focus:border-primary transition-colors"
+              className="bg-background border border-line p-2 font-semibold text-sm focus:border-accent transition-colors"
             >
               {exercises.map(ex => (
                 <option key={ex.id} value={ex.name}>{ex.name}</option>
@@ -264,35 +230,35 @@ export default function HistoryManager({
       )}
 
       {/* Workout Days History */}
-      <div className="bg-card border border-muted rounded-2xl shadow-sm overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-muted flex flex-col gap-4">
+      <div className="bg-panel border border-line overflow-hidden flex flex-col">
+        <div className="p-4 border-b border-line flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Calendar size={18} className="text-primary" />
-              <h3 className="font-bold text-foreground">Workout History</h3>
+              <Calendar size={18} className="text-accent" />
+              <h3 className="font-bold text-fg">Workout History</h3>
             </div>
-            {isSearching && <Loader2 size={16} className="text-muted-foreground animate-spin" />}
+            {isSearching && <Loader2 size={16} className="text-fg-muted animate-spin" />}
           </div>
           
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted" />
               <input 
                 type="text" 
                 placeholder="Search by day or exercise..." 
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full bg-background border border-muted rounded-xl py-2 pl-10 pr-4 text-sm font-semibold focus:border-primary transition-colors"
+                className="w-full bg-background border border-line py-2 pl-10 pr-4 text-sm font-semibold focus:border-accent transition-colors"
               />
             </div>
             
             {profiles.length > 0 && (
               <button
                 onClick={() => setIsFilterOpen(true)}
-                className={`p-2 rounded-xl border flex items-center justify-center transition-colors ${
+                className={`p-2 border flex items-center justify-center transition-colors ${
                   selectedProfileId || selectedDayName 
-                    ? "bg-primary text-primary-foreground border-primary" 
-                    : "bg-background border-muted text-muted-foreground hover:bg-muted"
+                    ? "bg-accent-fill text-on-accent border-accent" 
+                    : "bg-background border-line text-fg-muted hover:bg-field"
                 }`}
               >
                 <Filter size={18} />
@@ -303,16 +269,16 @@ export default function HistoryManager({
 
         {/* Filter Popup Modal */}
         {isFilterOpen && (
-          <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/50 animate-in fade-in duration-200">
-            <div className="bg-card w-full sm:w-[400px] rounded-t-3xl sm:rounded-3xl shadow-xl p-5 animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200">
+          <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/50 animate-rise">
+            <div className="bg-panel w-full sm:w-[400px] sm: p-5 animate-rise sm: sm: duration-200">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-foreground flex items-center gap-2">
-                  <Filter size={18} className="text-primary" />
+                <h3 className="font-bold text-fg flex items-center gap-2">
+                  <Filter size={18} className="text-accent" />
                   Filter History
                 </h3>
                 <button 
                   onClick={() => setIsFilterOpen(false)}
-                  className="p-2 text-muted-foreground hover:bg-muted rounded-full transition-colors"
+                  className="p-2 text-fg-muted hover:bg-field rounded-full transition-colors"
                 >
                   <X size={18} />
                 </button>
@@ -320,14 +286,14 @@ export default function HistoryManager({
 
               <div className="space-y-4">
                 <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 block">Routine Profile</label>
+                  <label className="text-eyebrow uppercase text-fg-dim mb-2 block">Routine Profile</label>
                   <select 
                     value={selectedProfileId}
                     onChange={e => {
                       setSelectedProfileId(e.target.value);
                       setSelectedDayName("");
                     }}
-                    className="w-full bg-background border border-muted rounded-xl p-3 text-sm font-semibold focus:border-primary transition-colors"
+                    className="w-full bg-background border border-line p-3 text-sm font-semibold focus:border-accent transition-colors"
                   >
                     <option value="">All Profiles</option>
                     {profiles.map(p => (
@@ -338,11 +304,11 @@ export default function HistoryManager({
                 
                 {selectedProfileId && (
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 block">Specific Day</label>
+                    <label className="text-eyebrow uppercase text-fg-dim mb-2 block">Specific Day</label>
                     <select
                       value={selectedDayName}
                       onChange={e => setSelectedDayName(e.target.value)}
-                      className="w-full bg-background border border-muted rounded-xl p-3 text-sm font-semibold focus:border-primary transition-colors"
+                      className="w-full bg-background border border-line p-3 text-sm font-semibold focus:border-accent transition-colors"
                     >
                       <option value="">All Days in Profile</option>
                       {activeProfileDays.map((d: any) => (
@@ -359,13 +325,13 @@ export default function HistoryManager({
                     setSelectedProfileId("");
                     setSelectedDayName("");
                   }}
-                  className="flex-1 py-3 border border-muted bg-background rounded-xl font-bold text-foreground text-sm hover:bg-muted transition-colors"
+                  className="flex-1 py-3 border border-line bg-background font-bold text-fg text-sm hover:bg-field transition-colors"
                 >
                   Clear Filters
                 </button>
                 <button 
                   onClick={() => setIsFilterOpen(false)}
-                  className="flex-1 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm shadow-md hover:bg-primary/90 transition-colors"
+                  className="flex-1 py-3 bg-accent-fill text-on-accent font-bold text-sm hover:bg-accent-dim transition-colors"
                 >
                   Apply Filters
                 </button>
@@ -376,45 +342,45 @@ export default function HistoryManager({
 
         <div className="divide-y divide-muted">
           {historyList.length === 0 ? (
-            <div className="p-6 text-center text-muted-foreground text-sm">No workout days found.</div>
+            <div className="p-6 text-center text-fg-muted text-sm">No workout days found.</div>
           ) : (
             historyList.map((session) => (
               <div key={session.id} className="flex flex-col">
                 <button 
                   onClick={() => toggleSession(session.id)}
-                  className="w-full p-4 flex items-center justify-between hover:bg-muted/30 transition-colors text-left"
+                  className="w-full p-4 flex items-center justify-between hover:bg-field/30 transition-colors text-left"
                 >
                   <div>
-                    <h4 className="font-bold text-foreground flex items-center gap-2">
+                    <h4 className="font-bold text-fg flex items-center gap-2">
                       {session.dayName}
                       {session.status === 'COMPLETED' ? (
-                        <CheckCircle2 size={16} className="text-green-500" />
+                        <CheckCircle2 size={16} className="text-accent" />
                       ) : session.status === 'SKIPPED' ? (
-                        <XCircle size={16} className="text-red-500" />
+                        <XCircle size={16} className="text-danger" />
                       ) : null}
                     </h4>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-fg-muted mt-1">
                       {new Date(session.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                     </p>
                   </div>
-                  <div className="text-muted-foreground">
+                  <div className="text-fg-muted">
                     {expandedSessions[session.id] ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                   </div>
                 </button>
                 
                 {/* Expanded Details */}
                 {expandedSessions[session.id] && (
-                  <div className="px-4 pb-4 pt-1 bg-muted/10">
+                  <div className="px-4 pb-4 pt-1 bg-field/10">
                     {session.exercises.length === 0 ? (
-                      <p className="text-xs text-muted-foreground italic py-2">No exercises logged.</p>
+                      <p className="text-xs text-fg-muted italic py-2">No exercises logged.</p>
                     ) : (
                       <div className="space-y-4 mt-2">
                         {session.exercises.map(ex => (
-                          <div key={ex.id} className="border-l-2 border-primary/50 pl-3">
-                            <h5 className="font-bold text-sm text-foreground mb-2">{ex.exerciseName}</h5>
+                          <div key={ex.id} className="border-l-2 border-accent pl-3">
+                            <h5 className="font-bold text-sm text-fg mb-2">{ex.exerciseName}</h5>
                             <div className="flex flex-wrap gap-2">
                               {ex.sets.map((s, i) => (
-                                <div key={i} className="bg-background border border-muted px-2 py-1 rounded text-xs font-semibold text-muted-foreground">
+                                <div key={i} className="bg-background border border-line px-2 py-1 rounded text-xs font-semibold text-fg-muted">
                                   Set {s.setNumber}: {describeSetLoose(s)}
                                 </div>
                               ))}
@@ -430,11 +396,11 @@ export default function HistoryManager({
           )}
         </div>
         {hasMore && (
-          <div className="p-4 border-t border-muted bg-muted/10">
+          <div className="p-4 border-t border-line bg-field/10">
             <button 
               onClick={handleLoadMore} 
               disabled={isLoadingMore}
-              className="w-full py-3 bg-background border border-muted hover:bg-muted rounded-xl font-bold text-sm text-foreground transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-3 bg-background border border-line hover:bg-field font-bold text-sm text-fg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isLoadingMore && <Loader2 size={16} className="animate-spin" />}
               {isLoadingMore ? "Loading..." : "Load More"}
@@ -444,9 +410,9 @@ export default function HistoryManager({
       </div>
 
       {/* History Table */}
-      <div className="bg-card border border-muted rounded-2xl shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-muted">
-          <h3 className="font-bold text-foreground">Log History</h3>
+      <div className="bg-panel border border-line overflow-hidden">
+        <div className="p-4 border-b border-line">
+          <h3 className="font-bold text-fg">Log History</h3>
         </div>
         <div className="divide-y divide-muted">
           {[...chartData].reverse().map((log, idx) => {
@@ -456,10 +422,10 @@ export default function HistoryManager({
               <div key={log.id} className="p-4 flex items-center justify-between">
                 <div>
                   <p className="font-semibold">{log.weight.toFixed(1)} kg</p>
-                  <p className="text-xs text-muted-foreground">{new Date(log.date).toLocaleDateString()} at {new Date(log.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                  <p className="text-xs text-fg-muted">{new Date(log.date).toLocaleDateString()} at {new Date(log.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                 </div>
                 {change !== 0 && (
-                  <div className={`text-xs font-bold flex items-center gap-1 ${change > 0 ? "text-red-500" : "text-green-500"}`}>
+                  <div className={`text-xs font-bold flex items-center gap-1 ${change > 0 ? "text-danger" : "text-accent"}`}>
                     {change > 0 ? "+" : ""}{change.toFixed(1)}
                   </div>
                 )}

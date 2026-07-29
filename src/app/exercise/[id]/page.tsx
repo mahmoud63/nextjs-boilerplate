@@ -1,27 +1,36 @@
 import { getExerciseHistory, getCycleStartDate, getExerciseConfig, getAllRoutineDays } from "@/app/actions";
 import Link from "next/link";
-import { ChevronLeft, Info, History, CheckCircle2, Link as LinkIcon, ExternalLink } from "lucide-react";
+import { ChevronLeft, Check, Link as LinkIcon, ExternalLink } from "lucide-react";
 import SetLogger from "./SetLogger";
 import HistoryChart from "./HistoryChart";
 import HistoryList from "./HistoryList";
 import ExerciseMedia from "@/components/ExerciseMedia";
 import { normalizeType, TYPE_LABELS } from "@/lib/exerciseTypes";
+import {
+  Card,
+  Chip,
+  Divider,
+  EmptyState,
+  PageTitle,
+  StatBlock,
+  StatRow,
+} from "@/components/ui";
 
-export default async function ExercisePage({ 
+export default async function ExercisePage({
   params,
   searchParams
-}: { 
+}: {
   params: Promise<{ id: string }>,
   searchParams: Promise<{ dayName?: string }>
 }) {
   const { id } = await params;
   const { dayName } = await searchParams;
-  
+
   const exerciseResult = await getExerciseConfig(id);
   const exercise = exerciseResult.success ? exerciseResult.data : null;
 
   if (!exercise) {
-    return <div className="text-center p-10 text-muted-foreground">Exercise not found</div>;
+    return <EmptyState title="Exercise not found" message="This exercise no longer exists." />;
   }
 
   // Determine active dayName
@@ -36,7 +45,7 @@ export default async function ExercisePage({
       }
     }
   }
-  
+
   if (!activeDayName) {
     activeDayName = "Unknown Day";
   }
@@ -68,81 +77,96 @@ export default async function ExercisePage({
     }
   }
 
-  return (
-    <div className="flex flex-col space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-      <header className="flex items-center gap-3">
-        <Link href="/" className="p-2 -ml-2 rounded-full hover:bg-muted/50 transition-colors">
-          <ChevronLeft size={24} className="text-muted-foreground hover:text-foreground" />
-        </Link>
-        <h1 className="text-xl font-bold tracking-tight leading-tight flex-1">{exercise.name}</h1>
-      </header>
+  const isDoneThisCycle =
+    history.length > 0 &&
+    new Date(history[history.length - 1].date) > startOfCycle &&
+    history[history.length - 1].sets.length >= exercise.sets;
 
-      {history && history.length > 0 && new Date(history[history.length - 1].date) > startOfCycle && history[history.length - 1].sets.length >= exercise.sets && (
-        <div className="bg-green-500/10 border border-green-500/20 text-green-500 p-3 rounded-xl flex items-center gap-2">
-          <CheckCircle2 size={20} />
-          <span className="font-bold text-sm">Exercise Completed for This Cycle!</span>
+  const unitLabel = exerciseType === "CARDIO" ? "Rounds" : "Sets";
+
+  return (
+    <div className="flex flex-col space-y-4 animate-rise">
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1.5 -ml-1 text-eyebrow uppercase text-fg-dim hover:text-fg transition-colors w-fit"
+      >
+        <ChevronLeft size={14} /> Back
+      </Link>
+
+      <PageTitle
+        title={exercise.name}
+        eyebrow={exercise.targetMuscle}
+        right={<Chip>{TYPE_LABELS[exerciseType]}</Chip>}
+      />
+
+      {isDoneThisCycle && (
+        <Card className="border-l-[3px] border-l-accent-fill" padded>
+          <div className="flex items-center gap-3">
+            <Check size={18} className="text-accent shrink-0" />
+            <p className="text-eyebrow uppercase text-fg">Done for this cycle</p>
+          </div>
+        </Card>
+      )}
+
+      {/* Targets as an instrument cluster: the three numbers checked between sets. */}
+      <div className="border border-line">
+        <StatRow>
+          <StatBlock label={unitLabel} value={exercise.sets} />
+          <StatBlock label="Reps" value={exercise.reps} />
+          <StatBlock label="Rest" value={exercise.rest} size="sm" />
+        </StatRow>
+      </div>
+
+      {(exercise.targetWeight || exercise.rpe) && (
+        <div className="flex flex-wrap gap-2">
+          {exercise.targetWeight && <Chip variant="outline">{exercise.targetWeight}</Chip>}
+          {exercise.rpe && <Chip variant="outline">RPE {exercise.rpe}</Chip>}
         </div>
       )}
 
-      <section className="bg-card border border-muted rounded-2xl p-4 shadow-lg flex items-start gap-4">
-        <div className="bg-primary/10 p-3 rounded-xl text-primary">
-          <Info size={24} />
-        </div>
-        <div className="text-sm w-full">
-          <div className="flex items-center justify-between gap-2 mb-1">
-            <p className="font-semibold text-foreground">{exercise.targetMuscle}</p>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted/50 px-2 py-1 rounded-md shrink-0">
-              {TYPE_LABELS[exerciseType]}
-            </span>
+      {exercise.notes && (
+        <Card>
+          <p className="text-eyebrow uppercase text-fg-dim">Coach note</p>
+          <p className="mt-2 text-body text-fg-muted">{exercise.notes}</p>
+        </Card>
+      )}
+
+      <ExerciseMedia videoUrl={exercise.videoUrl} imageUrl={exercise.imageUrl} name={exercise.name} />
+
+      {exercise.refLinks && exercise.refLinks.length > 0 && (
+        <div>
+          <p className="flex items-center gap-1.5 text-eyebrow uppercase text-fg-dim">
+            <LinkIcon size={12} /> References
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {exercise.refLinks.map((ref, idx) => (
+              <a
+                key={idx}
+                href={ref.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 border border-line-strong px-2.5 py-1.5 text-eyebrow uppercase text-fg-muted hover:border-accent hover:text-accent transition-colors"
+              >
+                {ref.label} <ExternalLink size={11} />
+              </a>
+            ))}
           </div>
-          <p className="text-muted-foreground">Target: {exercise.sets} {exerciseType === "CARDIO" ? "rounds" : "sets"} × {exercise.reps}</p>
-          <p className="text-muted-foreground">Rest: {exercise.rest}</p>
-          {exercise.targetWeight && <p className="text-muted-foreground">Weight: {exercise.targetWeight}</p>}
-          {exercise.rpe && <p className="text-muted-foreground">Target RPE: {exercise.rpe}</p>}
-          {exercise.notes && <p className="text-primary/80 mt-2 text-xs italic">{exercise.notes}</p>}
-
-          <ExerciseMedia videoUrl={exercise.videoUrl} imageUrl={exercise.imageUrl} name={exercise.name} />
-
-          {exercise.refLinks && exercise.refLinks.length > 0 && (
-            <div className="mt-4 space-y-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <LinkIcon size={12} /> References
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {exercise.refLinks.map((ref, idx) => (
-                  <a
-                    key={idx}
-                    href={ref.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/10 border border-primary/20 rounded-lg px-2.5 py-1.5 hover:bg-primary/20 transition-colors"
-                  >
-                    {ref.label} <ExternalLink size={11} />
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
-      </section>
+      )}
 
-      <section>
-        <SetLogger
-          exerciseId={exercise.id}
-          exerciseName={exercise.name}
-          exerciseType={exercise.type}
-          dayName={activeDayName}
-          nextSetNumber={cycleSetsCount + 1}
-          targetSets={exercise.sets}
-          nextExerciseId={nextExerciseId}
-        />
-      </section>
+      <SetLogger
+        exerciseId={exercise.id}
+        exerciseName={exercise.name}
+        exerciseType={exercise.type}
+        dayName={activeDayName}
+        nextSetNumber={cycleSetsCount + 1}
+        targetSets={exercise.sets}
+        nextExerciseId={nextExerciseId}
+      />
 
       {history && history.length > 0 && (
-        <section className="mt-8">
-          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-            <History size={18} className="text-primary" /> Past Performance
-          </h2>
+        <section className="pt-4 space-y-4">
+          <Divider label="Past performance" />
           <HistoryChart history={history} type={exerciseType} />
           <HistoryList history={history} type={exerciseType} />
         </section>
