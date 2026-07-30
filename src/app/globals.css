@@ -136,7 +136,14 @@
   --ease-kinetic: cubic-bezier(0.2, 0, 0, 1);
 
   --animate-breathe: breathe 2.4s var(--ease-kinetic) infinite;
-  --animate-rise: rise 0.2s var(--ease-kinetic) both;
+  /* `backwards`, not `both`: the animation ends on the element's natural state,
+     so forward-filling buys nothing and costs a lot. A filled `transform` stays
+     in the computed style as an identity matrix, and any transform — identity
+     included — makes the element a containing block for `position: fixed`
+     descendants. Page shells use `animate-rise`, so forward-filling anchored
+     every nested modal to the full-height shell instead of the viewport and
+     pushed it off screen. */
+  --animate-rise: rise 0.2s var(--ease-kinetic) backwards;
   --animate-seg: seg 0.32s var(--ease-kinetic) both;
   --animate-shimmer: shimmer 1.4s linear infinite;
 
