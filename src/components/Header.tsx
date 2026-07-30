@@ -1,66 +1,67 @@
-import Image from 'next/image';
 import Link from 'next/link';
-import { getCurrentUser } from '@/app/actions';
-import { UserCircle, Info } from 'lucide-react';
-import { BEAST_LOGO_B64 } from '@/lib/logo';
+import { getCurrentUser, getCycleStats } from '@/app/actions';
+import { UserCircle } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { ButtonLink } from '@/components/ui';
 
-/* Header carries no lime on purpose — it is on every screen, and spending the
-   one-per-viewport accent here would leave nothing for the active set below. */
-const ICON_BUTTON =
-  "p-2 text-fg-dim hover:text-fg hover:bg-field transition-colors duration-[120ms] ease-kinetic";
-
+/**
+ * A live status strip rather than branding.
+ *
+ * The logo and wordmark are gone from inner pages on purpose: this is an installed
+ * PWA, so the mark is already on the home screen and repeating it on every route
+ * spent 56px of a phone viewport on something the user cannot act on. What replaces
+ * it is cycle state they actually read between sets.
+ *
+ * Header carries no lime — it is on every screen, and the accent budget belongs to
+ * the active set below.
+ */
 export default async function Header() {
-  const user = await getCurrentUser();
+  const [user, statsResult] = await Promise.all([
+    getCurrentUser(),
+    getCycleStats(),
+  ]);
+
+  const stats = statsResult.success ? statsResult.data : null;
+  const done = stats?.completed ?? 0;
+  const skipped = stats?.skipped ?? 0;
 
   return (
     <header className="sticky top-0 z-50 w-full bg-background/85 backdrop-blur-md border-b border-line">
-      <div className="max-w-md mx-auto px-4 h-14 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5 min-w-0">
-          <Image
-            src={BEAST_LOGO_B64}
-            alt="App Icon"
-            width={32}
-            height={32}
-            className="bg-black shrink-0"
-            unoptimized={true}
-          />
-          <span className="font-display text-title-md uppercase text-fg leading-none">
-            BT
-          </span>
+      <div className="max-w-md mx-auto px-4 h-14 flex items-center justify-between gap-3">
+        <Link href="/" className="min-w-0 group" aria-label="Dashboard">
+          <p className="text-eyebrow uppercase text-fg-dim">Cycle</p>
+          {/* Mono and tabular so the row does not shift as counts tick over. */}
+          <p className="mt-0.5 font-mono tnum text-data-sm text-fg group-hover:text-accent transition-colors">
+            {done} done
+            <span className="text-fg-dim"> · {skipped} skip</span>
+          </p>
         </Link>
 
-        <div className="flex items-center gap-0.5">
-          <Link href="/about" aria-label="About" className={ICON_BUTTON}>
-            <Info size={20} />
-          </Link>
-
+        <div className="flex items-center gap-0.5 shrink-0">
           <ThemeToggle />
 
           {user ? (
-            <Link
-              href="/settings"
-              className="flex items-center gap-2 pl-1.5 group"
-            >
-              <span className="hidden sm:inline max-w-24 truncate font-mono text-data-sm text-fg-dim group-hover:text-fg-muted transition-colors">
-                {user.email}
-              </span>
+            <Link href="/settings" aria-label="Settings" className="pl-1.5 group">
               {user.profilePicUrl ? (
                 /* The avatar is the one intentionally round thing in the app. */
                 <img
                   src={`/api/blob?url=${encodeURIComponent(user.profilePicUrl)}`}
                   alt="Profile"
-                  className="w-8 h-8 rounded-full object-cover border border-line-strong"
+                  className="w-8 h-8 rounded-full object-cover border border-line-strong group-hover:border-accent transition-colors"
                 />
               ) : (
-                <UserCircle size={22} className="text-fg-dim group-hover:text-fg transition-colors" />
+                <UserCircle
+                  size={22}
+                  className="text-fg-dim group-hover:text-fg transition-colors"
+                />
               )}
             </Link>
           ) : (
-            <ButtonLink href="/login" variant="secondary" size="sm" className="ml-1">
+            <Link
+              href="/login"
+              className="ml-1 px-3 h-9 inline-flex items-center border border-line-strong text-[11px] font-bold uppercase tracking-[0.14em] text-fg hover:border-accent hover:text-accent transition-colors"
+            >
               Login
-            </ButtonLink>
+            </Link>
           )}
         </div>
       </div>

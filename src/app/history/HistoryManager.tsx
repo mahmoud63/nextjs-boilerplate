@@ -3,14 +3,13 @@
 import { useState, useTransition, useEffect } from "react";
 import { logWeight, getWorkoutHistory } from "@/app/actions";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
-import { Loader2, Plus, TrendingDown, TrendingUp, Scale, Calendar, ChevronDown, ChevronUp, CheckCircle2, XCircle, Search, Filter, X } from "lucide-react";
+import { Plus, Scale, Calendar, ChevronDown, ChevronUp, CheckCircle2, XCircle, Search, Filter, X } from "lucide-react";
 
 import ExerciseChart from "./ExerciseChart";
 import { describeSetLoose, type SetLog } from "@/lib/exerciseTypes";
-import { Button, Card, Field, PageTitle, StatBlock, StatRow } from "@/components/ui";
+import { Button, Card, Field, PageTitle, PendingBars, StatBlock, StatRow } from "@/components/ui";
 import {
   chartMargin,
-  CHART_COLORS,
   gridProps,
   lineProps,
   tooltipProps,
@@ -237,7 +236,7 @@ export default function HistoryManager({
               <Calendar size={18} className="text-accent" />
               <h3 className="font-bold text-fg">Workout History</h3>
             </div>
-            {isSearching && <Loader2 size={16} className="text-fg-muted animate-spin" />}
+            {isSearching && <PendingBars className="text-fg-muted" />}
           </div>
           
           <div className="flex gap-2">
@@ -402,7 +401,7 @@ export default function HistoryManager({
               disabled={isLoadingMore}
               className="w-full py-3 bg-background border border-line hover:bg-field font-bold text-sm text-fg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {isLoadingMore && <Loader2 size={16} className="animate-spin" />}
+              {isLoadingMore && <PendingBars />}
               {isLoadingMore ? "Loading..." : "Load More"}
             </button>
           </div>

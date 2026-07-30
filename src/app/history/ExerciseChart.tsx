@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { getExerciseHistory } from "@/app/actions";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { LoaderCircle } from "lucide-react";
-import { EmptyState, StatBlock, StatRow } from "@/components/ui";
+import { EmptyState, PendingBars, StatBlock, StatRow } from "@/components/ui";
 import {
   chartMargin,
   gridProps,
@@ -55,7 +54,7 @@ export default function ExerciseChart({ exerciseName }: { exerciseName: string }
   if (loading) {
     return (
       <div className="h-56 flex items-center justify-center">
-        <LoaderCircle className="animate-spin text-fg-dim" />
+        <PendingBars className="h-4 w-8 text-fg-dim" />
       </div>
     );
   }

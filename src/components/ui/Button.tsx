@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { LoaderCircle } from "lucide-react";
 import type { ButtonHTMLAttributes, ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { PendingBars } from "./PendingBars";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 export type ButtonSize = "sm" | "md" | "lg";
@@ -74,7 +74,7 @@ export function Button({
       disabled={disabled || loading}
       className={classesFor(variant, size, fullWidth, className)}
     >
-      {loading ? <LoaderCircle size={16} className="animate-spin" /> : icon}
+      {loading ? <PendingBars /> : icon}
       {children}
       {!loading && iconRight}
     </button>

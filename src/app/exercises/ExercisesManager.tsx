@@ -3,11 +3,12 @@
 import { useState, useTransition } from "react";
 import { upload } from "@vercel/blob/client";
 import { createExercise, updateExercise, deleteExercise } from "@/app/actions";
-import { Loader2, Plus, Edit2, Trash2, Upload, ImageIcon, Film, X, Link as LinkIcon } from "lucide-react";
+import { Plus, Edit2, Trash2, Upload, ImageIcon, Film, X, Link as LinkIcon } from "lucide-react";
 import ConfirmModal from "@/components/ConfirmModal";
 import ExerciseMedia from "@/components/ExerciseMedia";
 import { EXERCISE_TYPES, TYPE_HINTS, TYPE_LABELS, normalizeType, type ExerciseType } from "@/lib/exerciseTypes";
 
+import { PendingBars, RouteLoader } from "@/components/ui";
 type Exercise = any;
 type RefLink = { label: string; url: string };
 
@@ -177,7 +178,7 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
 
       {isPending && (
         <div className="fixed inset-0 bg-background/50 backdrop-blur-sm z-[100] flex items-center justify-center">
-          <Loader2 className="animate-spin text-accent w-10 h-10" />
+          <RouteLoader compact label="Exercises" />
         </div>
       )}
 
@@ -386,7 +387,7 @@ export default function ExercisesManager({ initialExercises }: { initialExercise
                     <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-line-foreground/30 cursor-pointer hover:bg-field/10 transition-colors">
                       {isUploading ? (
                         <div className="flex flex-col items-center">
-                          <Loader2 className="w-8 h-8 text-accent animate-spin mb-2" />
+                          <PendingBars className="h-4 w-10 text-accent mb-2" />
                           <span className="text-sm font-semibold text-accent">
                             {uploadProgress !== null ? `Uploading ${uploadProgress}%` : "Uploading..."}
                           </span>

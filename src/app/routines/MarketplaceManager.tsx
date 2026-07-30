@@ -2,10 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { getMarketplaceProfiles, copyMarketplaceProfile, updateMarketplaceProfileLocalCopy } from "@/app/actions";
-import { Download, Loader2, UserCircle, X, Activity, CheckCircle, RefreshCw } from "lucide-react";
+import { Download, UserCircle, X, Activity, CheckCircle, RefreshCw } from "lucide-react";
 import AlertModal, { AlertType } from "@/components/ui/AlertModal";
 import { toPlainText } from "@/lib/html";
 
+import { PendingBars } from "@/components/ui";
 export default function MarketplaceManager({ initialProfiles, userRoutines }: { initialProfiles: any[], userRoutines: any[] }) {
   const [activeTab, setActiveTab] = useState<"discover" | "added">("discover");
   const [profiles, setProfiles] = useState(initialProfiles);
@@ -123,7 +124,7 @@ export default function MarketplaceManager({ initialProfiles, userRoutines }: { 
                       disabled={isPending && downloadingId === p.id}
                       className="w-full flex items-center justify-center gap-2 bg-accent-fill text-white p-3 font-bold text-sm transition-colors hover:bg-accent-dim disabled:opacity-50"
                     >
-                      {isPending && downloadingId === p.id ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                      {isPending && downloadingId === p.id ? <PendingBars /> : <RefreshCw size={16} />}
                       Update Available
                     </button>
                   );
@@ -146,7 +147,7 @@ export default function MarketplaceManager({ initialProfiles, userRoutines }: { 
                   disabled={isPending && downloadingId === p.id}
                   className="w-full flex items-center justify-center gap-2 bg-accent-fill text-on-accent p-3 font-bold text-sm transition-colors hover:bg-accent-dim disabled:opacity-50"
                 >
-                  {isPending && downloadingId === p.id ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                  {isPending && downloadingId === p.id ? <PendingBars /> : <Download size={16} />}
                   Add to Routines
                 </button>
               );
@@ -228,7 +229,7 @@ export default function MarketplaceManager({ initialProfiles, userRoutines }: { 
                   className="flex-1 bg-accent-fill text-on-accent py-4 font-bold text-lg flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {isPending && downloadingId === selectedProfile.id ? (
-                    <><Loader2 size={24} className="animate-spin" /> Adding to Routines...</>
+                    <><PendingBars className="h-4 w-8" /> Adding to Routines...</>
                   ) : (
                     <><Download size={24} /> Add to My Routines</>
                   )}

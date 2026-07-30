@@ -2,11 +2,12 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { updateRoutineDay, createRoutineProfile, activateRoutineProfile, updateRoutineProfile, deleteRoutineProfile, publishToMarketplace, addRoutineDay, deleteRoutineDay, moveRoutineDay } from "@/app/actions";
-import { Loader2, Plus, Trash2, ArrowUp, ArrowDown, CheckCircle, Edit2, Globe, X, RefreshCw } from "lucide-react";
+import { Plus, Trash2, ArrowUp, ArrowDown, CheckCircle, Edit2, Globe, X, RefreshCw } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import AlertModal, { AlertType } from "@/components/ui/AlertModal";
 import RichTextEditor from "@/components/RichTextEditor";
 
+import { RouteLoader } from "@/components/ui";
 type Day = any;
 type Exercise = any;
 type Profile = any;
@@ -226,7 +227,7 @@ export default function DaysManager({
 
       {isPending && (
         <div className="fixed inset-0 bg-background/50 backdrop-blur-sm z-[100] flex items-center justify-center">
-          <Loader2 className="animate-spin text-accent w-10 h-10" />
+          <RouteLoader compact label="Days" />
         </div>
       )}
 

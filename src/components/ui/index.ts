@@ -25,11 +25,15 @@ export type { FieldProps, SelectFieldProps } from "./Field";
 export { ListRow, ListGroup } from "./ListRow";
 export type { ListRowProps, RowState } from "./ListRow";
 
+export { Logo, LogoLockup } from "./Logo";
+
 export { Modal } from "./Modal";
 export type { ModalTone } from "./Modal";
 
 export { PageTitle } from "./PageTitle";
 export { Panel } from "./Panel";
+export { PendingBars } from "./PendingBars";
+export { RouteLoader } from "./RouteLoader";
 export { SegmentedProgress } from "./SegmentedProgress";
 export { Skeleton, SkeletonRow } from "./Skeleton";
 

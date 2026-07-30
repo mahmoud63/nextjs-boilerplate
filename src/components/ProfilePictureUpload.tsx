@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { uploadImage, updateProfilePicture } from "@/app/actions";
-import { User, LoaderCircle, Camera } from "lucide-react";
-import { StatBlock, StatRow } from "@/components/ui";
+import { User, Camera } from "lucide-react";
+import { PendingBars, StatBlock, StatRow } from "@/components/ui";
 
 export default function ProfilePictureUpload({
   currentUrl,
@@ -69,7 +69,7 @@ export default function ProfilePictureUpload({
           </span>
           <span className="absolute inset-0 rounded-full bg-black/65 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
             {isPending ? (
-              <LoaderCircle className="animate-spin text-accent w-5 h-5" />
+              <PendingBars className="h-3 w-5 text-accent" />
             ) : (
               <Camera className="text-accent w-5 h-5" />
             )}

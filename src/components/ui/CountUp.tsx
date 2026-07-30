@@ -21,6 +21,9 @@ export function CountUp({
   pad?: number;
   className?: string;
 }) {
+  // Seeded with the final value so the server render, a no-JS client, and the
+  // reduced-motion path all show the real number without an effect having to
+  // correct it — writing state synchronously in an effect would cascade a render.
   const [shown, setShown] = useState(value);
   const frame = useRef<number>(0);
 
@@ -29,13 +32,9 @@ export function CountUp({
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    if (reduced || value === 0) {
-      setShown(value);
-      return;
-    }
+    if (reduced || value === 0) return;
 
     const start = performance.now();
-    setShown(0);
 
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / duration);

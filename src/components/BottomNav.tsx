@@ -1,8 +1,28 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, CalendarDays, Dumbbell, History, Settings } from "lucide-react";
+
+/**
+ * Marks the tapped tab the moment it is pressed, before the route responds.
+ *
+ * useLinkStatus must live inside the <Link> it reports on. It fires only while a
+ * navigation is genuinely pending — a prefetched route skips the state entirely, so
+ * this never flickers on a fast hop.
+ */
+function PendingMarker() {
+  const { pending } = useLinkStatus();
+
+  return (
+    <span
+      aria-hidden
+      className={`absolute top-0 inset-x-0 h-0.5 bg-accent-fill origin-left transition-transform duration-200 ease-kinetic ${
+        pending ? "scale-x-100" : "scale-x-0"
+      }`}
+    />
+  );
+}
 
 export default function BottomNav() {
   const pathname = usePathname();
@@ -37,8 +57,10 @@ export default function BottomNav() {
               >
                 {/* Lime marker on the top edge — the tab bar's share of the accent
                     budget, and readable without relying on icon colour alone. */}
-                {isActive && (
+                {isActive ? (
                   <span className="absolute top-0 inset-x-0 h-0.5 bg-accent-fill" />
+                ) : (
+                  <PendingMarker />
                 )}
                 <Icon
                   size={22}

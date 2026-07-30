@@ -2,9 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { adminToggleUserStatus, adminDeleteUser, adminDeleteMarketplaceItem } from "@/app/actions";
-import { Shield, Users, Globe, Trash2, ToggleLeft, ToggleRight, CheckCircle, XCircle, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Shield, Users, Globe, Trash2, ToggleLeft, ToggleRight, CheckCircle, XCircle, ChevronDown, ChevronUp } from "lucide-react";
 import AlertModal, { AlertType } from "@/components/ui/AlertModal";
-import { Chip, PageTitle, StatBlock, StatRow } from "@/components/ui";
+import { Chip, PageTitle, RouteLoader, StatBlock, StatRow } from "@/components/ui";
 
 export default function AdminPanel({
   initialUsers, 
@@ -76,7 +76,7 @@ export default function AdminPanel({
     <div className="space-y-6 pb-20 animate-rise">
       {isPending && (
         <div className="fixed inset-0 bg-background/50 backdrop-blur-sm z-[100] flex items-center justify-center">
-          <Loader2 className="animate-spin text-accent w-10 h-10" />
+          <RouteLoader compact label="Admin data" />
         </div>
       )}
 

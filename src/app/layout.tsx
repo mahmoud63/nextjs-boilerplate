@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { Anton, Archivo_Narrow, Geist_Mono } from "next/font/google";
 import Header from "@/components/Header";
@@ -57,6 +58,23 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
+/**
+ * Same 56px box and hairline as the real header, so the chrome does not jump when
+ * the user chip resolves.
+ */
+function HeaderFallback() {
+  return (
+    <header className="sticky top-0 z-50 w-full bg-background/85 backdrop-blur-md border-b border-line">
+      <div className="max-w-md mx-auto px-4 h-14 flex items-center">
+        <div>
+          <p className="text-eyebrow uppercase text-fg-dim">Cycle</p>
+          <p className="mt-0.5 font-mono tnum text-data-sm text-fg-dim">— done</p>
+        </div>
+      </div>
+    </header>
+  );
+}
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -82,7 +100,15 @@ export default async function RootLayout({
             <>
               <SplashScreen />
               <HeaderWrapper>
-                <Header />
+                {/* Header awaits getCurrentUser(), a database round trip. Left
+                    unwrapped it blocks the whole navigation: per the loading.js
+                    docs, runtime data in a layout means the route's loading.tsx
+                    never gets to render, which is why switching tabs sat on the
+                    old screen for seconds. Behind Suspense the shell paints at
+                    once and the user chip fills in after. */}
+                <Suspense fallback={<HeaderFallback />}>
+                  <Header />
+                </Suspense>
               </HeaderWrapper>
               <main className="flex-1 w-full max-w-md mx-auto relative px-4 pt-6 pb-6">
                 {children}

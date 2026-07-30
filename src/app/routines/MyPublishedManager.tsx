@@ -2,10 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { updateMarketplaceProfile, deleteMarketplaceProfile, getCurrentUser } from "@/app/actions";
-import { Loader2, Trash2, Edit3, ArrowRight, X } from "lucide-react";
+import { Trash2, Edit3, ArrowRight, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import AlertModal, { AlertType } from "@/components/ui/AlertModal";
 
+import { RouteLoader } from "@/components/ui";
 export default function MyPublishedManager({ 
   publishedProfiles, 
   setActiveTab,
@@ -64,7 +65,7 @@ export default function MyPublishedManager({
     <div className="space-y-4">
       {isPending && (
         <div className="fixed inset-0 bg-background/50 backdrop-blur-sm z-[100] flex items-center justify-center">
-          <Loader2 className="animate-spin text-accent w-10 h-10" />
+          <RouteLoader compact label="Published" />
         </div>
       )}
 

@@ -4,9 +4,7 @@ import { useState, useTransition } from "react";
 import { login, signup } from "@/app/actions";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
-import Image from "next/image";
-import { BEAST_LOGO_B64 } from "@/lib/logo";
-import { Button, Field, SelectField, Tabs, type TabItem } from "@/components/ui";
+import { Button, Field, Logo, SelectField, Tabs, type TabItem } from "@/components/ui";
 
 type Mode = "signin" | "signup";
 
@@ -79,14 +77,7 @@ export default function LoginPage() {
 
       <div className="relative w-full max-w-sm px-5 flex flex-col animate-rise">
         <div className="flex items-center gap-3">
-          <Image
-            src={BEAST_LOGO_B64}
-            alt="Beast Tracker"
-            width={48}
-            height={48}
-            className="bg-black shrink-0"
-            unoptimized={true}
-          />
+          <Logo size={48} />
           <div className="min-w-0">
             <h1 className="font-display text-title-lg uppercase text-fg leading-none">
               Beast Tracker

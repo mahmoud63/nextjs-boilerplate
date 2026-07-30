@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 
-import { BEAST_LOGO_B64 } from "@/lib/logo";
+import { Logo } from "@/components/ui";
 
 export default function SplashScreen() {
   const [show, setShow] = useState(true);
@@ -29,14 +28,7 @@ export default function SplashScreen() {
       }`}
     >
       <div className="flex flex-col items-center animate-rise">
-        <Image
-          src={BEAST_LOGO_B64}
-          alt="Beast Tracker Icon"
-          width={88}
-          height={88}
-          className="bg-black"
-          unoptimized={true}
-        />
+        <Logo size={88} />
         <h1 className="mt-6 font-display text-title-lg uppercase text-fg leading-none">
           Beast Tracker
         </h1>

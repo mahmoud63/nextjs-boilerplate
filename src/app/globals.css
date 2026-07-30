@@ -140,6 +140,13 @@
   --animate-seg: seg 0.32s var(--ease-kinetic) both;
   --animate-shimmer: shimmer 1.4s linear infinite;
 
+  /* Route loader. The 120ms delay is the whole trick: a navigation that resolves
+     quickly finishes before the boot screen ever reaches opacity 1, so fast hops
+     stay silent instead of flashing an interstitial. */
+  --animate-boot-in: boot-in 160ms var(--ease-kinetic) 120ms both;
+  --animate-boot-seg: boot-seg 1.1s var(--ease-kinetic) infinite;
+  --animate-scan: scan 1.4s var(--ease-kinetic) infinite;
+
   @keyframes breathe {
     0%,
     100% {
@@ -179,6 +186,36 @@
     }
     to {
       background-position: 250% 0;
+    }
+  }
+
+  @keyframes boot-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Indeterminate: the segments pulse in sequence rather than reporting progress,
+     because there is no progress to report — the server has not answered yet. */
+  @keyframes boot-seg {
+    0%,
+    100% {
+      opacity: 0.16;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes scan {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(400%);
     }
   }
 }
@@ -508,5 +545,16 @@ input[type="number"]::-webkit-outer-spin-button {
   .animate-breathe {
     animation: none !important;
     box-shadow: 0 0 0 1px var(--accent-fill) !important;
+  }
+
+  /* Same reasoning for the loader: the pulse is decorative and goes, but the bar
+     has to stay legible rather than freeze at its 16% keyframe. */
+  .animate-boot-seg {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  .animate-scan {
+    animation: none !important;
   }
 }
